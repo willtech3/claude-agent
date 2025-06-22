@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Colors and formatting
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+
+# Function to show usage
+usage() {
+    echo -e "${GREEN}Claude PR Agent${NC}"
+    echo ""
+    echo "Usage: claude-pr <repo-url> <prompt> [options]"
+    echo ""
+    echo "Prompt examples:"
+    echo "  \"/issue 123\"                    Work on GitHub issue #123"
+    echo "  \"Add dark mode\"                 Custom task"
+    echo "  \"/issue 123 and add tests\"      Issue with additional instructions"
+    echo ""
+    echo "Options:"
+    echo "  --json    Output in JSON format with jq"
+    echo "  --bg      Run in background with logging"
+    echo "  --help    Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  claude-pr https://github.com/owner/repo \"/issue 123\""
+    echo "  claude-pr https://github.com/owner/repo \"Add authentication system\""
+    echo "  claude-pr https://github.com/owner/repo \"/issue 456 but use TypeScript\" --json"
+    exit 1
+}
+
+# Check for help
+if [[ "${1:-}" == "--help" ]] || [[ $# -eq 0 ]]; then
+    usage
+fi
+
+# Parse arguments
+REPO_URL="${1:?Error: Repository URL required}"
+PROMPT="${2:?Error: Prompt required}"
+shift 2
+
+# Parse options
+OUTPUT_MODE="stream"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --json)
+            OUTPUT_MODE="json"
+            shift
+            ;;
+        --bg)
+            OUTPUT_MODE="bg"
+            shift
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown option: $1${NC}"
+            exit 1
+            ;;
+    esac
+done
+
+# Nice header for interactive mode
+if [[ "$OUTPUT_MODE" == "stream" ]]; then
+    echo -e "${GREEN}🤖 Claude PR Agent${NC}"
+    echo -e "${YELLOW}Repository:${NC} $REPO_URL"
+    
+    # Show prompt info
+    if [[ "$PROMPT" =~ /issue[[:space:]]+([0-9]+) ]]; then
+        echo -e "${YELLOW}Issue:${NC} #${BASH_REMATCH[1]}"
+        # Show additional instructions if present
+        EXTRA="${PROMPT#*/issue ${BASH_REMATCH[1]}}"
+        if [[ -n "$EXTRA" ]] && [[ "$EXTRA" != "$PROMPT" ]]; then
+            echo -e "${PURPLE}Additional:${NC}${EXTRA}"
+        fi
+    else
+        echo -e "${PURPLE}Task:${NC} ${PROMPT:0:60}..."
+    fi
+    
+    echo -e "${BLUE}─────────────────────────────────────────${NC}"
+    echo ""
+fi
+
+# Background mode
+if [[ "$OUTPUT_MODE" == "bg" ]]; then
+    LOG_DIR="${HOME}/claude-logs"
+    mkdir -p "$LOG_DIR"
+    
+    # Create log name from prompt
+    if [[ "$PROMPT" =~ /issue[[:space:]]+([0-9]+) ]]; then
+        LOG_NAME="claude-issue-${BASH_REMATCH[1]}"
+    else
+        LOG_NAME="claude-task"
+    fi
+    LOG_FILE="$LOG_DIR/${LOG_NAME}-$(date +%Y%m%d-%H%M%S).log"
+    
+    echo -e "${GREEN}🤖 Claude PR Agent - Background Mode${NC}"
+    echo -e "${YELLOW}Repository:${NC} $REPO_URL"
+    echo -e "${PURPLE}Prompt:${NC} ${PROMPT:0:60}..."
+    echo -e "${YELLOW}Log file:${NC} $LOG_FILE"
+    echo ""
+    echo -e "${GREEN}Starting in background...${NC}"
+    
+    docker run --rm -d \
+        --name "${LOG_NAME}-$(date +%s)" \
+        -e GH_TOKEN \
+        -e REPO_URL="$REPO_URL" \
+        -e PROMPT="$PROMPT" \
+        -v "$HOME/.claude":/home/node/.claude:rw \
+        claude-code-agent > "$LOG_FILE" 2>&1
+    
+    echo -e "${GREEN}Started! Monitor with:${NC} tail -f $LOG_FILE"
+    exit 0
+fi
+
+# Run Docker container
+if [[ "$OUTPUT_MODE" == "json" ]]; then
+    # JSON output mode
+    docker run --rm -i \
+        -e GH_TOKEN \
+        -e REPO_URL="$REPO_URL" \
+        -e PROMPT="$PROMPT" \
+        -v "$HOME/.claude":/home/node/.claude:rw \
+        claude-code-agent | jq -C .
+else
+    # Interactive mode (default)
+    docker run --rm -it \
+        -e GH_TOKEN \
+        -e REPO_URL="$REPO_URL" \
+        -e PROMPT="$PROMPT" \
+        -v "$HOME/.claude":/home/node/.claude:rw \
+        claude-code-agent
+fi
