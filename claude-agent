@@ -131,7 +131,7 @@ mkdir -p "$HOME/.claude-agent"
 
 # Run Docker container
 if [[ "$OUTPUT_MODE" == "json" ]]; then
-    # JSON output mode
+    # JSON output mode - process streaming JSON line by line
     docker run --rm -i \
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
@@ -139,7 +139,9 @@ if [[ "$OUTPUT_MODE" == "json" ]]; then
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
-        claude-code-agent | jq -C .
+        claude-code-agent | while IFS= read -r line; do
+            echo "$line" | jq -C . 2>/dev/null || echo "$line"
+        done
 else
     # Interactive mode (default)
     docker run --rm -it \
