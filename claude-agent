@@ -136,6 +136,28 @@ fi
 # Ensure history directory exists
 mkdir -p "$HOME/.claude-agent"
 
+# On macOS, extract Claude credentials from keychain if needed
+if [[ "$OSTYPE" == "darwin"* ]] && [[ ! -f "$HOME/.claude/.credentials.json" ]]; then
+    echo -e "${YELLOW}Extracting Claude credentials from macOS keychain...${NC}"
+    mkdir -p "$HOME/.claude"
+    
+    # Extract the API key from keychain
+    API_KEY=$(security find-generic-password -s 'Claude Code-credentials' -w 2>/dev/null)
+    
+    if [[ -n "$API_KEY" ]]; then
+        # Create credentials file in the expected format
+        echo "{\"apiKey\":\"$API_KEY\"}" > "$HOME/.claude/.credentials.json"
+        chmod 600 "$HOME/.claude/.credentials.json"
+        
+        # Clean up on exit
+        trap "rm -f $HOME/.claude/.credentials.json" EXIT
+    else
+        echo -e "${RED}Warning: Could not find Claude credentials in keychain${NC}"
+        echo -e "${RED}Please run 'claude login' on your host machine first${NC}"
+        exit 1
+    fi
+fi
+
 # Run Docker container
 if [[ "$OUTPUT_MODE" == "json" ]]; then
     # JSON output mode - process streaming JSON line by line
