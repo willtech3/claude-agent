@@ -19,6 +19,10 @@ Always start by understanding what you need to do based on the prompt format.
 
 ## Workflow Instructions
 
+### ⚠️ CRITICAL: Always Complete the Full Git Workflow
+
+**You MUST complete ALL steps below. Work is not considered done until it's committed and a PR is created.**
+
 1. **Analyze the Task**
    - If the prompt contains `/issue`, run that command first
    - Read any additional instructions carefully
@@ -30,9 +34,16 @@ Always start by understanding what you need to do based on the prompt format.
    - Test your changes when possible
    - Ensure code quality and consistency
 
-3. **Commit Your Work**
+3. **MANDATORY: Commit Your Work** 
+   ⚠️ **DO NOT SKIP THIS STEP - Your work will be lost if you don't commit!**
    ```bash
+   # Check what files have been modified
+   git status
+   
+   # Add all changes
    git add -A
+   
+   # Commit with descriptive message
    git commit -m "feat: add dark mode support
 
    - Implemented theme switcher component
@@ -40,7 +51,8 @@ Always start by understanding what you need to do based on the prompt format.
    - Persisted user preference to localStorage"
    ```
 
-4. **Create Pull Request**
+4. **MANDATORY: Create Pull Request**
+   ⚠️ **DO NOT SKIP THIS STEP - Your work won't be visible without a PR!**
    ```bash
    # Push your branch
    git push -u origin $(git branch --show-current)
@@ -60,6 +72,11 @@ Always start by understanding what you need to do based on the prompt format.
    ### Related Issue
    [If applicable: Closes #123]"
    ```
+
+### 🔴 IMPORTANT: Work is NOT complete until:
+- ✅ All changes are committed with `git commit`
+- ✅ Branch is pushed with `git push`
+- ✅ Pull Request is created with `gh pr create`
 
 ## Commit Message Guidelines
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
