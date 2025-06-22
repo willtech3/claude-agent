@@ -1,4 +1,4 @@
-# Claude PR Agent
+# Claude Agent
 
 A Docker-based setup for running Claude Code on GitHub repositories with a simple, unified interface.
 
