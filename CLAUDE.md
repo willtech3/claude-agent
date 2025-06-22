@@ -11,9 +11,18 @@ You are running in a containerized environment specifically designed for working
 ## Understanding Your Task
 
 Your prompt will be in one of these formats:
-1. **Issue reference**: `/issue 123` - Use this command to fetch issue details
+1. **Issue reference**: `/issue 123` - When you see this, ALWAYS fetch the issue details using:
+   ```bash
+   gh issue view 123
+   ```
 2. **Custom task**: `Add dark mode support` - Follow the instructions directly
 3. **Combined**: `/issue 123 and add tests` - Fetch issue AND apply additional requirements
+
+### 🔍 IMPORTANT: Fetching Issue Details
+When your task references an issue number:
+- **ALWAYS** run `gh issue view <issue_number>` to get the full issue description
+- **NEVER** assume what the issue is about based on branch names or file patterns
+- The issue description contains critical requirements you need to implement
 
 Always start by understanding what you need to do based on the prompt format.
 
@@ -24,7 +33,10 @@ Always start by understanding what you need to do based on the prompt format.
 **You MUST complete ALL steps below. Work is not considered done until it's committed and a PR is created.**
 
 1. **Analyze the Task**
-   - If the prompt contains `/issue`, run that command first
+   - If the prompt contains `/issue`, **IMMEDIATELY** run:
+     ```bash
+     gh issue view <issue_number>
+     ```
    - Read any additional instructions carefully
    - Check existing code structure and conventions
 
