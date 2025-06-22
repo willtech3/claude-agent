@@ -6,13 +6,25 @@ if [ -f /usr/local/bin/init-firewall.sh ] && [ "$EUID" -eq 0 ]; then
     /usr/local/bin/init-firewall.sh || echo "Warning: Firewall initialization failed, continuing without network restrictions"
 fi
 
+# Configure git authentication if GH_TOKEN is provided
+if [ -n "${GH_TOKEN:-}" ]; then
+    git config --global credential.helper store
+    echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
+    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+else
+    echo "Warning: GH_TOKEN not set. Private repositories may not be accessible."
+fi
+
 # Clone the repository
 REPO_URL="${REPO_URL:?Repository URL is required}"
 PROMPT="${PROMPT:?Prompt is required}"
 CLONE_DIR="/workspace/repo"
 
 echo "Cloning repository: $REPO_URL"
-git clone "$REPO_URL" "$CLONE_DIR"
+git clone "$REPO_URL" "$CLONE_DIR" || {
+    echo "Error: Failed to clone repository. If this is a private repository, ensure GH_TOKEN is set."
+    exit 1
+}
 cd "$CLONE_DIR"
 
 # Configure git for commits

@@ -12,8 +12,13 @@ RUN apt-get update && apt-get install -y \
     procps iptables \
     # Build essentials
     build-essential \
+    # Essential search tool (Claude uses this frequently)
+    ripgrep \
+    # Basic Python support
+    python3 python3-pip python3-venv \
  && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -s /usr/bin/python3 /usr/bin/python
 
 # Install Claude CLI
 RUN npm install -g @anthropic-ai/claude-code
