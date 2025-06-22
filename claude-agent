@@ -125,6 +125,7 @@ if [[ "$OUTPUT_MODE" == "bg" ]]; then
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
+        ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent > "$LOG_FILE" 2>&1
@@ -136,26 +137,41 @@ fi
 # Ensure history directory exists
 mkdir -p "$HOME/.claude-agent"
 
-# On macOS, extract Claude credentials from keychain if needed
-if [[ "$OSTYPE" == "darwin"* ]] && [[ ! -f "$HOME/.claude/.credentials.json" ]]; then
+# Handle Claude authentication
+# Option 1: Try to extract from macOS keychain (for MAX subscription)
+if [[ "$OSTYPE" == "darwin"* ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]] && [[ ! -f "$HOME/.claude/.credentials.json" ]]; then
+    # Extract the credentials from keychain
     echo -e "${YELLOW}Extracting Claude credentials from macOS keychain...${NC}"
-    mkdir -p "$HOME/.claude"
+    KEYCHAIN_CREDS=$(security find-generic-password -s 'Claude Code-credentials' -w 2>/dev/null)
     
-    # Extract the API key from keychain
-    API_KEY=$(security find-generic-password -s 'Claude Code-credentials' -w 2>/dev/null)
-    
-    if [[ -n "$API_KEY" ]]; then
-        # Create credentials file in the expected format
-        echo "{\"apiKey\":\"$API_KEY\"}" > "$HOME/.claude/.credentials.json"
+    if [[ -n "$KEYCHAIN_CREDS" ]]; then
+        # Create credentials file for Docker to use
+        mkdir -p "$HOME/.claude"
+        # Write the credentials directly as they come from keychain
+        echo "$KEYCHAIN_CREDS" > "$HOME/.claude/.credentials.json"
         chmod 600 "$HOME/.claude/.credentials.json"
         
-        # Clean up on exit
+        # Mark for cleanup
+        CLEANUP_CREDS=true
         trap "rm -f $HOME/.claude/.credentials.json" EXIT
+        
+        echo -e "${GREEN}Successfully extracted Claude MAX subscription credentials${NC}"
     else
-        echo -e "${RED}Warning: Could not find Claude credentials in keychain${NC}"
-        echo -e "${RED}Please run 'claude login' on your host machine first${NC}"
-        exit 1
+        echo -e "${RED}Failed to extract credentials from keychain${NC}"
     fi
+fi
+
+# Option 2: Check if credentials file exists
+if [[ -f "$HOME/.claude/.credentials.json" ]]; then
+    echo -e "${YELLOW}Using Claude credentials from ~/.claude/.credentials.json${NC}"
+elif [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+    echo -e "${YELLOW}Using provided ANTHROPIC_API_KEY${NC}"
+else
+    echo -e "${RED}Error: No Claude authentication found${NC}"
+    echo -e "${RED}Please either:${NC}"
+    echo -e "${RED}  1. Run 'claude login' on your host machine (for MAX subscription)${NC}"
+    echo -e "${RED}  2. Set ANTHROPIC_API_KEY environment variable${NC}"
+    exit 1
 fi
 
 # Run Docker container
@@ -166,6 +182,7 @@ if [[ "$OUTPUT_MODE" == "json" ]]; then
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
+        ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent | while IFS= read -r line; do
@@ -178,6 +195,7 @@ else
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
+        ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent

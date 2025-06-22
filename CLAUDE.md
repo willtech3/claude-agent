@@ -128,3 +128,13 @@ If you encounter "Invalid API key" or authentication errors DURING your work:
 - Include all necessary changes in your PR
 - Don't modify unrelated files
 - The PR will be created against the default branch
+
+## 🚨 FINAL CHECKLIST - DO NOT EXIT WITHOUT COMPLETING:
+Before considering your work complete, verify:
+1. ✅ Have you run `git status` to see your changes?
+2. ✅ Have you run `git add -A` to stage all changes?
+3. ✅ Have you run `git commit -m "..."` with a descriptive message?
+4. ✅ Have you run `git push -u origin $(git branch --show-current)`?
+5. ✅ Have you run `gh pr create` to create the pull request?
+
+If ANY of these are not done, YOUR WORK WILL BE LOST. Complete them NOW.

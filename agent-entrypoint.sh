@@ -6,14 +6,26 @@ if [ -f /usr/local/bin/init-firewall.sh ] && [ "$EUID" -eq 0 ]; then
     /usr/local/bin/init-firewall.sh || echo "Warning: Firewall initialization failed, continuing without network restrictions"
 fi
 
+# Handle Claude authentication
+if [ -f ~/.claude/.credentials.json ]; then
+    # Credentials file exists (mounted from host)
+    echo "Using Claude credentials from ~/.claude/.credentials.json"
+elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    # Using API key - Claude CLI will pick this up automatically
+    echo "Using ANTHROPIC_API_KEY for authentication..."
+else
+    echo "Warning: No Claude authentication provided. Claude commands may fail."
+fi
+
 # Configure git authentication if GH_TOKEN is provided
 if [ -n "${GH_TOKEN:-}" ]; then
     git config --global credential.helper store
     echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
     git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     
-    # Configure GitHub CLI with the token
-    echo "${GH_TOKEN}" | gh auth login --with-token
+    # GitHub CLI will automatically use GH_TOKEN from environment
+    # We don't need to run gh auth login when GH_TOKEN is set
+    gh auth status >/dev/null 2>&1 || true
 else
     echo "Warning: GH_TOKEN not set. GitHub CLI commands (gh) will not work."
     echo "This includes fetching GitHub issues with '/issue' commands."
