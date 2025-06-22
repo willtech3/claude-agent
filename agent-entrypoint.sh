@@ -11,8 +11,19 @@ if [ -n "${GH_TOKEN:-}" ]; then
     git config --global credential.helper store
     echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
     git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+    
+    # Configure GitHub CLI with the token
+    echo "${GH_TOKEN}" | gh auth login --with-token
 else
-    echo "Warning: GH_TOKEN not set. Private repositories may not be accessible."
+    echo "Warning: GH_TOKEN not set. GitHub CLI commands (gh) will not work."
+    echo "This includes fetching GitHub issues with '/issue' commands."
+    
+    # If the prompt contains /issue, fail early
+    if [[ "$PROMPT" =~ /issue ]]; then
+        echo "Error: Cannot fetch GitHub issues without GH_TOKEN authentication."
+        echo "Please set GH_TOKEN environment variable before running."
+        exit 1
+    fi
 fi
 
 # Clone the repository

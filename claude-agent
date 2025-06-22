@@ -43,6 +43,14 @@ REPO_URL="${1:?Error: Repository URL required}"
 PROMPT="${2:?Error: Prompt required}"
 shift 2
 
+# Check for GH_TOKEN if using /issue commands
+if [[ "$PROMPT" =~ /issue ]] && [[ -z "${GH_TOKEN:-}" ]]; then
+    echo -e "${RED}Error: GH_TOKEN environment variable is required for GitHub issue commands${NC}"
+    echo -e "${YELLOW}Please set it with: export GH_TOKEN=your_github_token${NC}"
+    echo -e "${YELLOW}See docs/github-authentication.md for instructions on creating a token${NC}"
+    exit 1
+fi
+
 # Parse options
 OUTPUT_MODE="stream"
 MAX_TURNS=""
