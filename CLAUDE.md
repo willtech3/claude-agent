@@ -18,6 +18,7 @@ If you see authentication errors:
 - **STOP IMMEDIATELY** - You cannot complete the task without GitHub access
 - Report: "GitHub authentication is not configured. Please ensure GH_TOKEN is set."
 - **DO NOT** attempt to work around this by guessing issue content
+- **DO NOT** use curl or other tools to bypass authentication - only use `gh` CLI
 
 ## Understanding Your Task
 
