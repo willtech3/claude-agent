@@ -47,6 +47,13 @@ The command takes a repository URL and a prompt:
 claude-agent <repo-url> "<prompt>" [options]
 ```
 
+### Options
+
+- `--json` - Output in JSON format (great for CI/CD pipelines)
+- `--bg` - Run in background mode with logging
+- `--max-turns N` - Limit Claude to N iterations (default: unlimited)
+- `--help` - Show help message
+
 ### Work on GitHub Issues
 
 ```bash
@@ -83,6 +90,19 @@ claude-agent https://github.com/owner/repo "/issue 123" --json
 claude-agent https://github.com/owner/repo "Add API documentation" --bg
 ```
 
+### Controlling Agent Iterations
+
+```bash
+# Unlimited turns (default) - Claude decides when the task is complete
+claude-agent https://github.com/owner/repo "Refactor authentication system"
+
+# Limit to 5 turns for simple tasks
+claude-agent https://github.com/owner/repo "Fix typo in README" --max-turns 5
+
+# More turns for complex tasks
+claude-agent https://github.com/owner/repo "/issue 789" --max-turns 20
+```
+
 ### View Help
 
 ```bash
@@ -106,6 +126,19 @@ claude-agent --help
 - Can combine issue references with additional instructions
 - Claude will follow repository conventions automatically
 
+### When to Use --max-turns
+
+**Leave unlimited (default)** for:
+- Complex features or refactoring
+- Tasks where scope is unclear
+- When you want Claude to fully complete the task
+
+**Set a limit** for:
+- Simple, well-defined tasks (5-10 turns)
+- When you want to review progress incrementally
+- Testing or experimentation
+- Resource-constrained environments
+
 ## Requirements
 
 - Docker
@@ -118,6 +151,8 @@ This tool implements several security measures:
 
 1. **Containerized Execution**: All operations run inside Docker containers
 2. **Tool Restrictions**: Claude is limited to specific git and GitHub operations
+   - By default, Claude runs with unlimited turns (stops when task is complete)
+   - Use `--max-turns` to limit iterations for simpler tasks or safety
 3. **Network Security**: Optional firewall configuration (requires privileged mode)
 4. **No Local File Access**: Claude cannot access your local filesystem
 5. **Ephemeral Environments**: Each run starts fresh (except command history)

@@ -21,9 +21,10 @@ usage() {
     echo "  \"/issue 123 and add tests\"      Issue with additional instructions"
     echo ""
     echo "Options:"
-    echo "  --json    Output in JSON format with jq"
-    echo "  --bg      Run in background with logging"
-    echo "  --help    Show this help message"
+    echo "  --json         Output in JSON format with jq"
+    echo "  --bg           Run in background with logging"
+    echo "  --max-turns N  Limit Claude to N turns (default: unlimited)"
+    echo "  --help         Show this help message"
     echo ""
     echo "Examples:"
     echo "  claude-agent https://github.com/owner/repo \"/issue 123\""
@@ -44,6 +45,7 @@ shift 2
 
 # Parse options
 OUTPUT_MODE="stream"
+MAX_TURNS=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --json)
@@ -53,6 +55,14 @@ while [[ $# -gt 0 ]]; do
         --bg)
             OUTPUT_MODE="bg"
             shift
+            ;;
+        --max-turns)
+            if [[ -z "${2:-}" ]] || ! [[ "${2}" =~ ^[0-9]+$ ]]; then
+                echo -e "${RED}Error: --max-turns requires a positive number${NC}"
+                exit 1
+            fi
+            MAX_TURNS="$2"
+            shift 2
             ;;
         *)
             echo -e "${RED}Error: Unknown option: $1${NC}"
@@ -107,6 +117,7 @@ if [[ "$OUTPUT_MODE" == "bg" ]]; then
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent > "$LOG_FILE" 2>&1
@@ -125,6 +136,7 @@ if [[ "$OUTPUT_MODE" == "json" ]]; then
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent | jq -C .
@@ -134,6 +146,7 @@ else
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent

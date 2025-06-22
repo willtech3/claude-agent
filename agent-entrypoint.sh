@@ -41,7 +41,7 @@ echo "$PROMPT" | claude -p \
   --output-format stream-json \
   --verbose \
   --dangerously-skip-permissions \
-  --max-turns 10 \
+  ${MAX_TURNS:+--max-turns $MAX_TURNS} \
   --allowedTools \
     "Bash(git clone:*, git checkout:*, git add:*, git commit:*, git push:*, git config:*, git status:*, git diff:*, git log:*, git branch:*, git remote:*)" \
     "Bash(gh pr create:*, gh issue view:*, gh api:*)" \
