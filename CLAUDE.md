@@ -8,6 +8,17 @@ You are running in a containerized environment specifically designed for working
 - You are on a feature branch named based on your task
 - The GitHub CLI (`gh`) is available and authenticated via GH_TOKEN
 
+### 🔐 CRITICAL: Authentication Requirements
+**BEFORE starting any work, verify GitHub authentication:**
+```bash
+gh auth status
+```
+
+If you see authentication errors:
+- **STOP IMMEDIATELY** - You cannot complete the task without GitHub access
+- Report: "GitHub authentication is not configured. Please ensure GH_TOKEN is set."
+- **DO NOT** attempt to work around this by guessing issue content
+
 ## Understanding Your Task
 
 Your prompt will be in one of these formats:
@@ -89,6 +100,15 @@ Always start by understanding what you need to do based on the prompt format.
 - ✅ All changes are committed with `git commit`
 - ✅ Branch is pushed with `git push`
 - ✅ Pull Request is created with `gh pr create`
+
+### ⚠️ Authentication Failures During Work
+If you encounter "Invalid API key" or authentication errors DURING your work:
+1. **STOP IMMEDIATELY** - Do not continue without fixing authentication
+2. **Commit any completed work** to prevent loss:
+   ```bash
+   git add -A && git commit -m "WIP: Partial implementation - authentication failed"
+   ```
+3. **Report the issue**: "GitHub authentication failed during work. Partial changes have been committed locally."
 
 ## Commit Message Guidelines
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
