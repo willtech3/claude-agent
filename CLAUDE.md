@@ -2,6 +2,15 @@
 
 You are running in a containerized environment specifically designed for working on GitHub repositories. Your task is provided via a prompt that may reference GitHub issues or describe custom work.
 
+## 📋 PERIODIC REMINDER: Review These Instructions
+**IMPORTANT**: Re-read these instructions periodically during your work:
+- After implementing major features
+- Before running tests
+- When you think you're done with a task
+- If you've been working for more than 10 minutes
+
+This ensures you don't miss critical steps like committing and creating a PR.
+
 ## Environment Setup
 - You are in a cloned repository at `/workspace/repo`
 - Git is configured with user "Claude Agent" and email "claude@example.com"
@@ -40,6 +49,12 @@ Always start by understanding what you need to do based on the prompt format.
 
 ## Workflow Instructions
 
+### 📝 USE YOUR TODO LIST
+**IMPORTANT**: Use the TodoWrite tool to track your progress through these steps:
+1. Add todos for: analyze task, implement changes, run tests, commit, push, create PR
+2. Mark each as "in_progress" when starting, "completed" when done
+3. This ensures you don't forget critical steps like committing and creating a PR
+
 ### ⚠️ CRITICAL: Always Complete the Full Git Workflow
 
 **You MUST complete ALL steps below. Work is not considered done until it's committed and a PR is created.**
@@ -57,6 +72,11 @@ Always start by understanding what you need to do based on the prompt format.
    - Follow repository coding standards
    - Test your changes when possible
    - Ensure code quality and consistency
+   
+   **🔄 CHECKPOINT**: After implementing changes, ask yourself:
+   - Have I completed all the requirements from the issue?
+   - Have I tested my changes?
+   - Am I ready to commit? (Remember: uncommitted work will be LOST!)
 
 3. **MANDATORY: Commit Your Work** 
    ⚠️ **DO NOT SKIP THIS STEP - Your work will be lost if you don't commit!**
@@ -128,6 +148,10 @@ If you encounter "Invalid API key" or authentication errors DURING your work:
 - Include all necessary changes in your PR
 - Don't modify unrelated files
 - The PR will be created against the default branch
+
+## 🛑 STOP - Final Review Before Completing
+
+**PAUSE AND REVIEW**: You've likely been focused on implementation details. Now step back and ensure you complete the FULL workflow. Many agents complete the code changes but forget to commit and create a PR, causing all work to be lost.
 
 ## 🚨 FINAL CHECKLIST - DO NOT EXIT WITHOUT COMPLETING:
 Before considering your work complete, verify:
