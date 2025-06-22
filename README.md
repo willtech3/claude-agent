@@ -16,21 +16,31 @@ A Docker-based setup for running Claude Code on GitHub repositories with a simpl
 ### 1. Build the Docker Image
 
 ```bash
-docker build -t claude-code-agent /Users/williamlane/claude-agent/
+# Navigate to where you cloned this repository
+cd /path/to/claude-agent
+
+# Build the Docker image
+docker build -t claude-code-agent .
 ```
 
 ### 2. Set up the Command
 
-Add the script to your PATH:
+Add the script to your PATH by creating a symbolic link:
 
 ```bash
-ln -s /Users/williamlane/claude-agent/claude-agent ~/bin/claude-agent
+# Create a symlink in a directory that's in your PATH
+# Common options include ~/.local/bin, ~/bin, or /usr/local/bin
+ln -s /path/to/claude-agent/claude-agent ~/.local/bin/claude-agent
+
+# Make sure the target directory exists first:
+mkdir -p ~/.local/bin
 ```
 
-Or add to your `.zshrc`:
+Alternatively, add the claude-agent directory to your PATH:
 
 ```bash
-export PATH="/Users/williamlane/claude-agent:$PATH"
+# Add to ~/.bashrc or ~/.zshrc
+export PATH="/path/to/claude-agent:$PATH"
 ```
 
 ### 3. Ensure GitHub Token is Set
