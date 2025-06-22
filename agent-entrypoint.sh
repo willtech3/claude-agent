@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Initialize network security (optional, requires root)
+if [ -f /usr/local/bin/init-firewall.sh ] && [ "$EUID" -eq 0 ]; then
+    /usr/local/bin/init-firewall.sh || echo "Warning: Firewall initialization failed, continuing without network restrictions"
+fi
+
 # Clone the repository
 REPO_URL="${REPO_URL:?Repository URL is required}"
 PROMPT="${PROMPT:?Prompt is required}"
@@ -36,4 +41,18 @@ echo "$PROMPT" | claude -p \
   --output-format stream-json \
   --verbose \
   --dangerously-skip-permissions \
-  --allowedTools "Bash(git *:*)" "Github(*)" "Write"
+  --max-turns 10 \
+  --allowedTools \
+    "Bash(git clone:*, git checkout:*, git add:*, git commit:*, git push:*, git config:*, git status:*, git diff:*, git log:*, git branch:*, git remote:*)" \
+    "Bash(gh pr create:*, gh issue view:*, gh api:*)" \
+    "Bash(npm:*, yarn:*, pnpm:*)" \
+    "Bash(python:*, pip:*, pytest:*)" \
+    "Bash(make:*, cmake:*)" \
+    "Bash(cd:*, pwd:*, echo:*, cat:*, grep:*, find:*, ls:*)" \
+    "Write" \
+    "Read" \
+    "Edit" \
+    "MultiEdit" \
+    "Grep" \
+    "Glob" \
+    "LS"

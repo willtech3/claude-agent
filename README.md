@@ -24,7 +24,7 @@ docker build -t claude-code-agent /Users/williamlane/claude-agent/
 Add the script to your PATH:
 
 ```bash
-ln -s /Users/williamlane/claude-agent/claude-pr ~/bin/claude-pr
+ln -s /Users/williamlane/claude-agent/claude-agent ~/bin/claude-agent
 ```
 
 Or add to your `.zshrc`:
@@ -44,49 +44,49 @@ export GH_TOKEN=your_github_token_here
 The command takes a repository URL and a prompt:
 
 ```bash
-claude-pr <repo-url> "<prompt>" [options]
+claude-agent <repo-url> "<prompt>" [options]
 ```
 
 ### Work on GitHub Issues
 
 ```bash
 # Simple issue reference
-claude-pr https://github.com/owner/repo "/issue 123"
+claude-agent https://github.com/owner/repo "/issue 123"
 
 # Issue with additional instructions
-claude-pr https://github.com/owner/repo "/issue 123 and add comprehensive tests"
+claude-agent https://github.com/owner/repo "/issue 123 and add comprehensive tests"
 
 # Issue with specific requirements
-claude-pr https://github.com/owner/repo "/issue 456 but use TypeScript"
+claude-agent https://github.com/owner/repo "/issue 456 but use TypeScript"
 ```
 
 ### Custom Tasks
 
 ```bash
 # Add a new feature
-claude-pr https://github.com/owner/repo "Add dark mode support"
+claude-agent https://github.com/owner/repo "Add dark mode support"
 
 # Refactor code
-claude-pr https://github.com/owner/repo "Refactor authentication to use JWT"
+claude-agent https://github.com/owner/repo "Refactor authentication to use JWT"
 
 # Fix a bug
-claude-pr https://github.com/owner/repo "Fix memory leak in image processing"
+claude-agent https://github.com/owner/repo "Fix memory leak in image processing"
 ```
 
 ### Output Formats
 
 ```bash
 # JSON output (great for scripting)
-claude-pr https://github.com/owner/repo "/issue 123" --json
+claude-agent https://github.com/owner/repo "/issue 123" --json
 
 # Background mode with logging
-claude-pr https://github.com/owner/repo "Add API documentation" --bg
+claude-agent https://github.com/owner/repo "Add API documentation" --bg
 ```
 
 ### View Help
 
 ```bash
-claude-pr --help
+claude-agent --help
 ```
 
 ## How It Works
@@ -111,3 +111,34 @@ claude-pr --help
 - Docker
 - GitHub personal access token (with repo permissions)
 - Claude API access (via `~/.claude` directory)
+
+## Security Considerations
+
+This tool implements several security measures:
+
+1. **Containerized Execution**: All operations run inside Docker containers
+2. **Tool Restrictions**: Claude is limited to specific git and GitHub operations
+3. **Network Security**: Optional firewall configuration (requires privileged mode)
+4. **No Local File Access**: Claude cannot access your local filesystem
+5. **Ephemeral Environments**: Each run starts fresh (except command history)
+
+### Network Security (Optional)
+
+To enable network restrictions, run the container with `--cap-add=NET_ADMIN`:
+
+```bash
+# Modify the claude-agent script to add this flag to docker run commands
+```
+
+This implements a default-deny firewall policy, only allowing connections to:
+- GitHub domains
+- Anthropic API endpoints
+- NPM registry
+- Essential services
+
+## Differences from Standard Claude Code
+
+1. **Automated PR Workflow**: Specifically designed for GitHub PR automation
+2. **Repository Isolation**: Each task runs in its own cloned repository
+3. **Restricted Tools**: More limited tool access compared to interactive Claude Code
+4. **No Interactive Mode**: Runs as a single-turn automation

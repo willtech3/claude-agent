@@ -1,4 +1,4 @@
-# Claude PR Agent Instructions
+# Claude Agent Instructions
 
 You are running in a containerized environment specifically designed for working on GitHub repositories. Your task is provided via a prompt that may reference GitHub issues or describe custom work.
 

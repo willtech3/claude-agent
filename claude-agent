@@ -11,9 +11,9 @@ NC='\033[0m' # No Color
 
 # Function to show usage
 usage() {
-    echo -e "${GREEN}Claude PR Agent${NC}"
+    echo -e "${GREEN}Claude Agent${NC}"
     echo ""
-    echo "Usage: claude-pr <repo-url> <prompt> [options]"
+    echo "Usage: claude-agent <repo-url> <prompt> [options]"
     echo ""
     echo "Prompt examples:"
     echo "  \"/issue 123\"                    Work on GitHub issue #123"
@@ -26,9 +26,9 @@ usage() {
     echo "  --help    Show this help message"
     echo ""
     echo "Examples:"
-    echo "  claude-pr https://github.com/owner/repo \"/issue 123\""
-    echo "  claude-pr https://github.com/owner/repo \"Add authentication system\""
-    echo "  claude-pr https://github.com/owner/repo \"/issue 456 but use TypeScript\" --json"
+    echo "  claude-agent https://github.com/owner/repo \"/issue 123\""
+    echo "  claude-agent https://github.com/owner/repo \"Add authentication system\""
+    echo "  claude-agent https://github.com/owner/repo \"/issue 456 but use TypeScript\" --json"
     exit 1
 }
 
@@ -63,7 +63,7 @@ done
 
 # Nice header for interactive mode
 if [[ "$OUTPUT_MODE" == "stream" ]]; then
-    echo -e "${GREEN}🤖 Claude PR Agent${NC}"
+    echo -e "${GREEN}🤖 Claude Agent${NC}"
     echo -e "${YELLOW}Repository:${NC} $REPO_URL"
     
     # Show prompt info
@@ -95,7 +95,7 @@ if [[ "$OUTPUT_MODE" == "bg" ]]; then
     fi
     LOG_FILE="$LOG_DIR/${LOG_NAME}-$(date +%Y%m%d-%H%M%S).log"
     
-    echo -e "${GREEN}🤖 Claude PR Agent - Background Mode${NC}"
+    echo -e "${GREEN}🤖 Claude Agent - Background Mode${NC}"
     echo -e "${YELLOW}Repository:${NC} $REPO_URL"
     echo -e "${PURPLE}Prompt:${NC} ${PROMPT:0:60}..."
     echo -e "${YELLOW}Log file:${NC} $LOG_FILE"
@@ -108,11 +108,15 @@ if [[ "$OUTPUT_MODE" == "bg" ]]; then
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         -v "$HOME/.claude":/home/node/.claude:rw \
+        -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent > "$LOG_FILE" 2>&1
     
     echo -e "${GREEN}Started! Monitor with:${NC} tail -f $LOG_FILE"
     exit 0
 fi
+
+# Ensure history directory exists
+mkdir -p "$HOME/.claude-agent"
 
 # Run Docker container
 if [[ "$OUTPUT_MODE" == "json" ]]; then
@@ -122,6 +126,7 @@ if [[ "$OUTPUT_MODE" == "json" ]]; then
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         -v "$HOME/.claude":/home/node/.claude:rw \
+        -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent | jq -C .
 else
     # Interactive mode (default)
@@ -130,5 +135,6 @@ else
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
         -v "$HOME/.claude":/home/node/.claude:rw \
+        -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
         claude-code-agent
 fi
