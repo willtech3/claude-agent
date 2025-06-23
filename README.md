@@ -273,7 +273,7 @@ claude-agent --help
 - For issues, use `/issue NUMBER` format
 - Be specific about requirements
 - Can combine issue references with additional instructions
-- Claude will follow repository conventions automatically
+- Claude will follow repository conventions automatically if CLAUDE.md is present in the repo
 
 ### When to Use --max-turns
 
