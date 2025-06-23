@@ -122,4 +122,16 @@ echo "$ENFORCED_PROMPT" | claude -p \
     "MultiEdit" \
     "Grep" \
     "Glob" \
-    "LS"
+    "LS" \
+  --denyTools \
+    "Bash(curl:*, wget:*, nc:*, netcat:*)" \
+    "Bash(ssh:*, scp:*, rsync:*)" \
+    "Bash(sudo:*, su:*, chmod:*, chown:*)" \
+    "Bash(rm -rf:*, dd:*, format:*)" \
+    "Bash(cron:*, crontab:*, at:*)" \
+    "Bash(systemctl:*, service:*)" \
+    "Bash(gpg --gen-key:*, openssl genrsa:*, openssl req -new:*)" \
+    "Bash(iptables:*, firewall-cmd:*)" \
+    "Bash(eval:*, exec:*)" \
+    "Bash(node -e:*, python -c:*, bash -c:*)" \
+    "Bash(export PATH=:*, export LD_LIBRARY_PATH=:*)"
