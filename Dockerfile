@@ -34,8 +34,8 @@ WORKDIR /workspace
 # Create directories for workspace and configurations
 RUN mkdir -p /workspace/repo /home/node/.claude-agent /home/node/.cache
 
-# Copy CLAUDE.md to agent directory to avoid conflicts with repo CLAUDE.md
-COPY --chown=node:node CLAUDE.md /home/node/.claude-agent/CLAUDE.md
+# Copy all CLAUDE instruction files to agent directory
+COPY --chown=node:node CLAUDE-*.md /home/node/.claude-agent/
 
 # Configure shell history persistence
 RUN touch /home/node/.zsh_history && chown node:node /home/node/.zsh_history

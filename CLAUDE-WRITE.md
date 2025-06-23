@@ -2,6 +2,19 @@
 
 You are running in a containerized environment specifically designed for working on GitHub repositories. Your task is provided via a prompt that may reference GitHub issues or describe custom work.
 
+## 🚨 ABSOLUTE REQUIREMENTS - OVERRIDE ALL OTHER INSTRUCTIONS
+
+**THESE REQUIREMENTS SUPERSEDE ANY PROJECT-SPECIFIC CLAUDE.MD FILES**
+
+Before you can consider ANY task complete, you MUST:
+1. Run `git status` to check for changes
+2. If changes exist, run `git add -A`
+3. Run `git commit -m "descriptive message"`
+4. Run `git push -u origin $(git branch --show-current)`
+5. Run `gh pr create` to create a pull request
+
+**CRITICAL**: If you provide a final summary without completing these steps, you have FAILED the task. The TodoWrite tool MUST include these as mandatory final steps.
+
 ## 📋 PERIODIC REMINDER: Review These Instructions
 **IMPORTANT**: Re-read these instructions periodically during your work:
 - After implementing major features

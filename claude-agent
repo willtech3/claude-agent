@@ -15,21 +15,40 @@ usage() {
     echo ""
     echo "Usage: claude-agent <repo-url> <prompt> [options]"
     echo ""
+    echo "Modes:"
+    echo "  Default        Write mode - makes changes and creates PRs"
+    echo "  --review       Review mode - analyzes PRs without making changes"
+    echo "  --ask          Ask mode - answers questions about the codebase"
+    echo "  --analyze      Analyze mode - performs security/quality analysis"
+    echo ""
     echo "Prompt examples:"
     echo "  \"/issue 123\"                    Work on GitHub issue #123"
-    echo "  \"Add dark mode\"                 Custom task"
-    echo "  \"/issue 123 and add tests\"      Issue with additional instructions"
+    echo "  \"/pr 456 --review\"              Review pull request #456"
+    echo "  \"How does auth work? --ask\"     Ask about authentication"
+    echo "  \"Security audit --analyze\"      Perform security analysis"
     echo ""
     echo "Options:"
+    echo "  --review       Enable PR review mode (read-only)"
+    echo "  --ask          Enable Q&A mode (read-only)"
+    echo "  --analyze      Enable analysis mode (read-only)"
+    echo "  --output-dir   Directory for artifacts (default: ./claude-artifacts)"
     echo "  --json         Output in JSON format with jq"
     echo "  --bg           Run in background with logging"
     echo "  --max-turns N  Limit Claude to N turns (default: unlimited)"
     echo "  --help         Show this help message"
     echo ""
     echo "Examples:"
+    echo "  # Write mode (default)"
     echo "  claude-agent https://github.com/owner/repo \"/issue 123\""
-    echo "  claude-agent https://github.com/owner/repo \"Add authentication system\""
-    echo "  claude-agent https://github.com/owner/repo \"/issue 456 but use TypeScript\" --json"
+    echo "  "
+    echo "  # Review mode"
+    echo "  claude-agent https://github.com/owner/repo \"/pr 456 --review\""
+    echo "  "
+    echo "  # Ask mode"
+    echo "  claude-agent https://github.com/owner/repo \"How does the caching work? --ask\""
+    echo "  "
+    echo "  # Analyze mode with custom output"
+    echo "  claude-agent https://github.com/owner/repo \"--analyze\" --output-dir ./security-report"
     exit 1
 }
 
@@ -43,9 +62,15 @@ REPO_URL="${1:?Error: Repository URL required}"
 PROMPT="${2:?Error: Prompt required}"
 shift 2
 
-# Check for GH_TOKEN if using /issue commands
-if [[ "$PROMPT" =~ /issue ]] && [[ -z "${GH_TOKEN:-}" ]]; then
-    echo -e "${RED}Error: GH_TOKEN environment variable is required for GitHub issue commands${NC}"
+# Check for mode flags in prompt
+if [[ "$PROMPT" =~ --review ]] || [[ "$PROMPT" =~ --ask ]] || [[ "$PROMPT" =~ --analyze ]]; then
+    # Mode is specified in prompt, no need to modify
+    true
+fi
+
+# Check for GH_TOKEN if using GitHub commands
+if [[ "$PROMPT" =~ /(issue|pr|pull) ]] && [[ -z "${GH_TOKEN:-}" ]]; then
+    echo -e "${RED}Error: GH_TOKEN environment variable is required for GitHub commands${NC}"
     echo -e "${YELLOW}Please set it with: export GH_TOKEN=your_github_token${NC}"
     exit 1
 fi
@@ -53,8 +78,24 @@ fi
 # Parse options
 OUTPUT_MODE="stream"
 MAX_TURNS=""
+OUTPUT_DIR="$PWD/claude-artifacts"
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --review|--ask|--analyze)
+            # Add mode flag to prompt if not already there
+            if ! [[ "$PROMPT" =~ $1 ]]; then
+                PROMPT="$PROMPT $1"
+            fi
+            shift
+            ;;
+        --output-dir)
+            if [[ -z "${2:-}" ]]; then
+                echo -e "${RED}Error: --output-dir requires a directory path${NC}"
+                exit 1
+            fi
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
         --json)
             OUTPUT_MODE="json"
             shift
@@ -78,10 +119,27 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Create output directory if using read-only modes
+if [[ "$PROMPT" =~ --(review|ask|analyze) ]]; then
+    mkdir -p "$OUTPUT_DIR"
+    echo -e "${YELLOW}Artifacts will be saved to:${NC} $OUTPUT_DIR"
+fi
+
 # Nice header for interactive mode
 if [[ "$OUTPUT_MODE" == "stream" ]]; then
     echo -e "${GREEN}🤖 Claude Agent${NC}"
     echo -e "${YELLOW}Repository:${NC} $REPO_URL"
+    
+    # Show mode
+    if [[ "$PROMPT" =~ --review ]]; then
+        echo -e "${BLUE}Mode:${NC} PR Review (read-only)"
+    elif [[ "$PROMPT" =~ --ask ]]; then
+        echo -e "${BLUE}Mode:${NC} Q&A (read-only)"
+    elif [[ "$PROMPT" =~ --analyze ]]; then
+        echo -e "${BLUE}Mode:${NC} Analysis (read-only)"
+    else
+        echo -e "${BLUE}Mode:${NC} Write (will create PR)"
+    fi
     
     # Show prompt info
     if [[ "$PROMPT" =~ /issue[[:space:]]+([0-9]+) ]]; then
@@ -91,6 +149,8 @@ if [[ "$OUTPUT_MODE" == "stream" ]]; then
         if [[ -n "$EXTRA" ]] && [[ "$EXTRA" != "$PROMPT" ]]; then
             echo -e "${PURPLE}Additional:${NC}${EXTRA}"
         fi
+    elif [[ "$PROMPT" =~ /pr[[:space:]]+([0-9]+) ]] || [[ "$PROMPT" =~ /pull/([0-9]+) ]]; then
+        echo -e "${YELLOW}Pull Request:${NC} #${BASH_REMATCH[1]}"
     else
         echo -e "${PURPLE}Task:${NC} ${PROMPT:0:60}..."
     fi
@@ -124,10 +184,12 @@ if [[ "$OUTPUT_MODE" == "bg" ]]; then
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        -e OUTPUT_DIR="/workspace/artifacts" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
+        -v "$OUTPUT_DIR":/workspace/artifacts:rw \
         claude-code-agent > "$LOG_FILE" 2>&1
     
     echo -e "${GREEN}Started! Monitor with:${NC} tail -f $LOG_FILE"
@@ -181,10 +243,12 @@ if [[ "$OUTPUT_MODE" == "json" ]]; then
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        -e OUTPUT_DIR="/workspace/artifacts" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
+        -v "$OUTPUT_DIR":/workspace/artifacts:rw \
         claude-code-agent | while IFS= read -r line; do
             echo "$line" | jq -C . 2>/dev/null || echo "$line"
         done
@@ -194,9 +258,40 @@ else
         -e GH_TOKEN \
         -e REPO_URL="$REPO_URL" \
         -e PROMPT="$PROMPT" \
+        -e OUTPUT_DIR="/workspace/artifacts" \
         ${MAX_TURNS:+-e MAX_TURNS="$MAX_TURNS"} \
         ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY} \
         -v "$HOME/.claude":/home/node/.claude:rw \
         -v "$HOME/.claude-agent/.zsh_history":/home/node/.zsh_history:rw \
+        -v "$OUTPUT_DIR":/workspace/artifacts:rw \
         claude-code-agent
+
+# Check exit status
+EXIT_CODE=$?
+
+# If Claude succeeded in write mode, verify PR was created
+if [[ $EXIT_CODE -eq 0 ]] && [[ "$OUTPUT_MODE" == "stream" ]] && ! [[ "$PROMPT" =~ --(review|ask|analyze) ]]; then
+    # Give a moment for final operations
+    sleep 2
+    
+    # Check if there's a recent PR
+    if command -v gh &> /dev/null && [[ -n "${GH_TOKEN:-}" ]]; then
+        RECENT_PR=$(gh pr list --author "@me" --limit 1 --json createdAt,number --jq '.[0] | select(.createdAt > (now - 300 | strftime("%Y-%m-%dT%H:%M:%SZ")))')
+        
+        if [[ -z "$RECENT_PR" ]]; then
+            echo ""
+            echo -e "${RED}⚠️  WARNING: No pull request was created in the last 5 minutes!${NC}"
+            echo -e "${YELLOW}Claude may have forgotten to create a PR. Check the repository.${NC}"
+        fi
+    fi
 fi
+
+# If in read-only mode, remind about artifacts
+if [[ $EXIT_CODE -eq 0 ]] && [[ "$PROMPT" =~ --(review|ask|analyze) ]]; then
+    echo ""
+    echo -e "${GREEN}✅ Analysis complete!${NC}"
+    echo -e "${YELLOW}Artifacts saved to:${NC} $OUTPUT_DIR"
+    ls -la "$OUTPUT_DIR"/{reviews,analysis,qa}/ 2>/dev/null | grep -E "\.md$|\.json$|\.sarif$" || echo "  (No artifacts found - they may not have been generated)"
+fi
+
+exit $EXIT_CODE
