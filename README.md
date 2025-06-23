@@ -1,6 +1,17 @@
 # Claude Agent
 
-A headless, containerized Claude Code agent for automated GitHub workflows including code implementation, PR reviews, Q&A sessions, and code analysis.
+A headless, non-interactive containerized Claude Code agent for automated GitHub workflows including code implementation, PR reviews, Q&A sessions, and code analysis. This agent runs completely autonomously without user interaction.
+
+## ⚠️ Security Warning
+
+**IMPORTANT: This agent should only be run with trusted code.** The Claude Agent executes code and makes changes to repositories. Running it on untrusted or malicious code could result in:
+
+- Execution of harmful code during analysis
+- Unintended modifications to your codebase
+- Exposure of sensitive information
+- Potential security vulnerabilities
+
+Always review the repository and ensure you trust the codebase before running the agent.
 
 ## Features
 
@@ -13,7 +24,7 @@ A headless, containerized Claude Code agent for automated GitHub workflows inclu
 - **GitHub Integration**: Full support for issues, PRs, and GitHub CLI
 - **Artifact Persistence**: Analysis outputs saved locally for review and CI/CD
 - **Smart Branch Management**: Automatic branch creation for write operations
-- **Multiple Output Formats**: Interactive, JSON, and background modes
+- **Multiple Output Formats**: Standard, JSON, and background modes
 
 ## Quick Start
 
@@ -55,10 +66,23 @@ export GH_TOKEN=your_github_token_here
 
 ## Usage
 
-The command takes a repository URL and a prompt:
+The Claude Agent is designed to help with various software development tasks while maintaining security and isolation. The command takes a repository URL and a prompt:
 
 ```bash
 claude-agent <repo-url> "<prompt>" [options]
+```
+
+### Basic Syntax
+
+```bash
+# General format
+claude-agent <repository-url> "<task-description>" [--mode-flag] [--options]
+
+# GitHub issue format
+claude-agent <repository-url> "/issue <number>" [--options]
+
+# Pull request review format
+claude-agent <repository-url> "/pr <number>" --review [--options]
 ```
 
 ### Modes
@@ -77,7 +101,22 @@ claude-agent <repo-url> "<prompt>" [options]
 - `--json` - Output in JSON format (great for CI/CD pipelines)
 - `--bg` - Run in background mode with logging
 - `--max-turns N` - Limit Claude to N iterations (default: unlimited)
+- `--dangerously-skip-permissions` - Skip permission checks (see security warnings below)
 - `--help` - Show help message
+
+### ⚡ Pitfalls of --dangerously-skip-permissions
+
+The `--dangerously-skip-permissions` flag bypasses important security checks. **Use with extreme caution:**
+
+- **Removes tool restrictions**: Claude gains access to potentially dangerous commands
+- **Bypasses safety guardrails**: No limits on file system operations or command execution
+- **Security risk**: Could execute harmful commands if the codebase is compromised
+- **No sandboxing**: Operations may affect the host system beyond the container
+
+**Only use this flag when:**
+- Working with fully trusted, verified code
+- In isolated development environments
+- You understand and accept the security risks
 
 ### Write Mode Examples (Default)
 
@@ -161,6 +200,52 @@ claude-artifacts/
     └── session-20240623-143022.md            # Q&A transcripts
 ```
 
+### Retrieving Non-GitHub Artifacts
+
+Since the agent runs non-interactively in a container, artifacts are persisted through Docker volume mounts. Here's how to retrieve them:
+
+**1. Using Volume Mounts (Recommended)**
+```bash
+# The artifacts are saved to your local filesystem via volume mount
+claude-agent https://github.com/owner/repo "Security audit --analyze" --output-dir ./my-artifacts
+
+# Artifacts will be available at ./my-artifacts/analysis/
+ls ./my-artifacts/analysis/
+```
+
+**2. Direct Docker Volume Access**
+```bash
+# If using default output directory
+docker run -v $(pwd)/claude-artifacts:/workspace/artifacts ...
+
+# Files are directly accessible on your host
+cat ./claude-artifacts/analysis/security-audit-*.md
+```
+
+**3. CI/CD Artifact Collection**
+```yaml
+# GitHub Actions example
+- name: Run Analysis
+  run: |
+    claude-agent $REPO_URL "Code quality analysis --analyze" \
+      --output-dir ./analysis-results
+
+- name: Upload Artifacts
+  uses: actions/upload-artifact@v3
+  with:
+    name: analysis-results
+    path: ./analysis-results/
+```
+
+**4. Programmatic Access (JSON Mode)**
+```bash
+# Use JSON output for programmatic processing
+claude-agent https://github.com/owner/repo "List all API endpoints --ask" --json > api-endpoints.json
+
+# Parse the JSON output
+jq '.artifacts' api-endpoints.json
+```
+
 ### Controlling Agent Iterations
 
 ```bash
@@ -223,7 +308,7 @@ claude-agent --help
 - Docker
 - GitHub personal access token (with repo permissions)
 - Claude authentication (one of):
-  - Claude MAX subscription: Run `claude login` on your host machine
+  - Claude subscription: Run `claude login` on your host machine
   - API Key: Set `ANTHROPIC_API_KEY` environment variable
 
 ## Security Considerations
@@ -237,6 +322,59 @@ This tool implements several security measures:
 3. **Network Security**: Optional firewall configuration (requires privileged mode)
 4. **No Local File Access**: Claude cannot access your local filesystem
 5. **Ephemeral Environments**: Each run starts fresh (except command history)
+
+### Attack Vectors to Consider
+
+**Poisoned Dependencies**: Malicious packages in package managers (npm, pip, etc.) could:
+- Execute harmful code during installation
+- Exfiltrate sensitive data
+- Compromise the build process
+
+**Supply Chain Attacks**: Compromised upstream dependencies or tools
+
+**Code Injection**: Malicious code patterns designed to exploit the agent
+
+**Resource Exhaustion**: Infinite loops or excessive resource consumption
+
+**Artifact-Related Attack Vectors**:
+- **Path Traversal**: Malicious code could attempt to write artifacts outside the designated directory
+- **Symlink Attacks**: Creation of symbolic links pointing to sensitive host files
+- **Volume Mount Exploitation**: If misconfigured, volume mounts could expose host filesystem
+- **File Permission Escalation**: Artifacts created with overly permissive modes
+- **Content Injection**: Malicious content in artifacts (e.g., XSS in HTML reports)
+
+**Mitigation Strategies**:
+- Always use absolute paths for `--output-dir`
+- Validate artifact contents before processing
+- Run with minimal Docker privileges
+- Regularly clean up old artifacts
+- Scan artifacts for malicious content before sharing
+
+### Anthropic's Tool Allowal and Denial Guidance
+
+The Claude Agent follows Anthropic's security principles for tool usage:
+
+**Allowed Tools** (by default):
+- File reading and editing within the repository
+- Git operations (status, diff, commit, branch management)
+- GitHub CLI for issues and PRs
+- Package management (npm, pip) for dependency installation
+- Build and test commands
+- Code analysis tools
+
+**Denied Tools** (by default):
+- System-level commands that could affect the host
+- Network tools beyond approved domains
+- File operations outside the repository
+- Privilege escalation commands
+- Direct database access
+- Cryptocurrency mining or related tools
+
+**Tool Approval Process**:
+1. Tools are evaluated based on necessity and risk
+2. High-risk operations require explicit user consent
+3. The agent will explain why a tool is needed before use
+4. Users can override defaults with `--dangerously-skip-permissions` (not recommended)
 
 ### Network Security (Optional)
 
@@ -307,6 +445,70 @@ jobs:
     sarif_file: ./security-report/analysis/
 ```
 
+## Adding Dependencies for Your Tech Stack
+
+The Claude Agent comes with common development tools pre-installed. However, you may need to add specific dependencies for your technology stack:
+
+### Creating a Custom Dockerfile
+
+```dockerfile
+# Extend the base Claude Agent image
+FROM claude-code-agent:latest
+
+# Example: Add Python data science libraries
+RUN pip install pandas numpy scikit-learn jupyter
+
+# Example: Add specific Node.js tools
+RUN npm install -g typescript eslint prettier
+
+# Example: Add database clients
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    mysql-client \
+    redis-tools
+
+# Example: Add language-specific tools
+RUN apt-get install -y \
+    golang \
+    rustc \
+    ruby
+```
+
+### Common Tech Stack Additions
+
+**Frontend Development**:
+```bash
+# React/Vue/Angular tooling
+RUN npm install -g @angular/cli @vue/cli create-react-app
+```
+
+**Backend Development**:
+```bash
+# API development tools
+RUN pip install fastapi django flask
+RUN npm install -g express-generator nest
+```
+
+**DevOps Tools**:
+```bash
+# Infrastructure as Code
+RUN apt-get install -y terraform ansible kubectl helm
+```
+
+**Data Science**:
+```bash
+# ML/AI libraries
+RUN pip install tensorflow pytorch transformers
+```
+
+### Best Practices for Dependencies
+
+1. **Verify Sources**: Only install from official package repositories
+2. **Pin Versions**: Use specific versions to ensure reproducibility
+3. **Minimal Installation**: Only add what's necessary for your use case
+4. **Security Scanning**: Run vulnerability scans on added dependencies
+5. **Documentation**: Document why each dependency is needed
+
 ## Differences from Standard Claude Code
 
 1. **Multi-Mode Operation**: Supports write, review, ask, and analyze modes
@@ -314,4 +516,6 @@ jobs:
 3. **Repository Isolation**: Each task runs in its own cloned repository
 4. **Artifact Generation**: Produces persistent outputs for CI/CD integration
 5. **Restricted Tools**: More limited tool access for security
-6. **No Interactive Mode**: Runs as single-turn automation
+6. **No Interactive Mode**: Runs completely autonomously without user interaction
+7. **Artifact-Based Output**: All non-GitHub outputs are saved as files via volume mounts
+8. **Single-Turn Execution**: Completes the entire task in one run without user intervention
