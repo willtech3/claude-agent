@@ -66,7 +66,7 @@ export GH_TOKEN=your_github_token_here
 
 ## Usage
 
-The Claude Agent is designed to help with various software development tasks while maintaining security and isolation. The command takes a repository URL and a prompt:
+The Claude Agent is designed to help with various software development tasks while maintaining isolation. The command takes a repository URL and a prompt:
 
 ```bash
 claude-agent <repo-url> "<prompt>" [options]
@@ -101,22 +101,7 @@ claude-agent <repository-url> "/pr <number>" --review [--options]
 - `--json` - Output in JSON format (great for CI/CD pipelines)
 - `--bg` - Run in background mode with logging
 - `--max-turns N` - Limit Claude to N iterations (default: unlimited)
-- `--dangerously-skip-permissions` - Skip permission checks (see security warnings below)
 - `--help` - Show help message
-
-### ⚡ Pitfalls of --dangerously-skip-permissions
-
-The `--dangerously-skip-permissions` flag bypasses important security checks. **Use with extreme caution:**
-
-- **Removes tool restrictions**: Claude gains access to potentially dangerous commands
-- **Bypasses safety guardrails**: No limits on file system operations or command execution
-- **Security risk**: Could execute harmful commands if the codebase is compromised
-- **No sandboxing**: Operations may affect the host system beyond the container
-
-**Only use this flag when:**
-- Working with fully trusted, verified code
-- In isolated development environments
-- You understand and accept the security risks
 
 ### Write Mode Examples (Default)
 
@@ -316,12 +301,10 @@ claude-agent --help
 This tool implements several security measures:
 
 1. **Containerized Execution**: All operations run inside Docker containers
-2. **Tool Restrictions**: Claude is limited to specific git and GitHub operations
-   - By default, Claude runs with unlimited turns (stops when task is complete)
-   - Use `--max-turns` to limit iterations for simpler tasks or safety
-3. **Network Security**: Optional firewall configuration (requires privileged mode)
-4. **No Local File Access**: Claude cannot access your local filesystem
-5. **Ephemeral Environments**: Each run starts fresh (except command history)
+2. **Ephemeral Environments**: Each run starts fresh (except command history)
+3. **No Host File Access**: Claude cannot access your local filesystem outside the container
+4. **Non-root Execution**: Runs as `node` user, not root
+5. **Turn Limits**: Use `--max-turns` to limit iterations for simpler tasks or safety
 
 ### Attack Vectors to Consider
 
@@ -350,45 +333,19 @@ This tool implements several security measures:
 - Regularly clean up old artifacts
 - Scan artifacts for malicious content before sharing
 
-### Anthropic's Tool Allowal and Denial Guidance
+### Security Implementation
 
-The Claude Agent follows Anthropic's security principles for tool usage:
+The Claude Agent implements security through containerization:
 
-**Allowed Tools** (by default):
-- File reading and editing within the repository
-- Git operations (status, diff, commit, branch management)
-- GitHub CLI for issues and PRs
-- Package management (npm, pip) for dependency installation
-- Build and test commands
-- Code analysis tools
+**Container Isolation**:
+- All operations run inside Docker containers
+- Each task gets a fresh environment
+- No access to host filesystem
+- Runs as non-root user (`node`)
+- Limited to repository directory for file operations
 
-**Denied Tools** (by default):
-- System-level commands that could affect the host
-- Network tools beyond approved domains
-- File operations outside the repository
-- Privilege escalation commands
-- Direct database access
-- Cryptocurrency mining or related tools
+**Important Note**: The agent runs with `--dangerously-skip-permissions` flag to enable full functionality. This is required for the agent to perform its intended tasks like creating files, running commands, and making commits. Ensure you only run this on trusted repositories.
 
-**Tool Approval Process**:
-1. Tools are evaluated based on necessity and risk
-2. High-risk operations require explicit user consent
-3. The agent will explain why a tool is needed before use
-4. Users can override defaults with `--dangerously-skip-permissions` (not recommended)
-
-### Network Security (Optional)
-
-To enable network restrictions, run the container with `--cap-add=NET_ADMIN`:
-
-```bash
-# Modify the claude-agent script to add this flag to docker run commands
-```
-
-This implements a default-deny firewall policy, only allowing connections to:
-- GitHub domains
-- Anthropic API endpoints
-- NPM registry
-- Essential services
 
 ## CI/CD Integration
 
@@ -405,6 +362,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Checkout Claude Agent
+        uses: actions/checkout@v3
+        with:
+          repository: willtech3/claude-agent
+          path: claude-agent
+      
+      - name: Build Claude Agent Docker Image
+        run: |
+          cd claude-agent
+          docker build -t claude-code-agent .
       
       - name: Claude PR Review
         env:
@@ -429,6 +397,17 @@ jobs:
 ### Security Scanning
 
 ```yaml
+- name: Checkout Claude Agent
+  uses: actions/checkout@v3
+  with:
+    repository: willtech3/claude-agent
+    path: claude-agent
+
+- name: Build Claude Agent
+  run: |
+    cd claude-agent
+    docker build -t claude-code-agent .
+
 - name: Security Analysis
   run: |
     docker run --rm \
