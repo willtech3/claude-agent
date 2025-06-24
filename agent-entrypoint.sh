@@ -123,7 +123,7 @@ echo "$ENFORCED_PROMPT" | claude -p \
     "Grep" \
     "Glob" \
     "LS" \
-  --denyTools \
+  --disallowedTools \
     "Bash(curl:*, wget:*, nc:*, netcat:*)" \
     "Bash(ssh:*, scp:*, rsync:*)" \
     "Bash(sudo:*, su:*, chmod:*, chown:*)" \
