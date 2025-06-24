@@ -296,6 +296,22 @@ claude-agent --help
   - Claude subscription: Run `claude login` on your host machine
   - API Key: Set `ANTHROPIC_API_KEY` environment variable
 
+### Using Claude Subscription Credentials
+
+If you have a Claude subscription, you can use your credentials with the agent:
+
+**On Linux:**
+- Your credentials need to be in `~/.claude/credentials.json`
+- If you've used `claude login` on your machine, they should already be there
+
+**On macOS:**
+- Credentials are stored in the macOS Keychain
+- Extract them to the required location with:
+  ```bash
+  security find-generic-password -s 'Claude Code-credentials' -w > ~/.claude/.credentials.json
+  ```
+- You may need to execute the `/login` command in interactive Claude Code on your local machine and go through the auth process to update these credentials periodically
+
 ## Security Considerations
 
 This tool implements several security measures:
