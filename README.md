@@ -301,7 +301,7 @@ claude-agent --help
 If you have a Claude subscription, you can use your credentials with the agent:
 
 **On Linux:**
-- Your credentials need to be in `~/.claude/credentials.json`
+- Your credentials need to be in `~/.claude/.credentials.json`
 - If you've used `claude login` on your machine, they should already be there
 
 **On macOS:**
