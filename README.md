@@ -361,7 +361,7 @@ The Claude Agent implements security through containerization:
 - Runs as non-root user (`node`)
 - Limited to repository directory for file operations
 
-**Important Note**: The agent runs with `--dangerously-skip-permissions` flag to enable full functionality. This is required for the agent to perform its intended tasks like creating files, running commands, and making commits. Ensure you only run this on trusted repositories.
+   **Important Note**: The agent runs with `--dangerously-skip-permissions` flag to enable full functionality. This is required for the agent to perform its intended tasks like creating files, running commands, and making commits. Ensure you only run this on trusted repositories.
 
 
 ## CI/CD Integration
