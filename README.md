@@ -319,7 +319,7 @@ This tool implements several security measures:
 1. **Containerized Execution**: All operations run inside Docker containers
 2. **Ephemeral Environments**: Each run starts fresh (except command history)
 3. **No Host File Access**: Claude cannot access your local filesystem outside the container unless in a read mode (ask, analyze, review).
-  ***In these modes artifacts are persisted via docker volumes, see security risks for detailed information.
+   In these modes artifacts are persisted via docker volumes, see Artifact-Related Attack Vectors for more information.
 5. **Non-root Execution**: Runs as `node` user, not root
 6. **Turn Limits**: Use `--max-turns` to limit iterations for simpler tasks or safety
 
