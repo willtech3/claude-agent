@@ -295,3 +295,4 @@ if [[ $EXIT_CODE -eq 0 ]] && [[ "$PROMPT" =~ --(review|ask|analyze) ]]; then
 fi
 
 exit $EXIT_CODE
+fi
