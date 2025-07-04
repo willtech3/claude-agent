@@ -1,6 +1,6 @@
 # Claude Agent
 
-A headless, non-interactive containerized Claude Code agent for automated GitHub workflows including code implementation, PR reviews, Q&A sessions, and code analysis. This agent runs completely autonomously without user interaction.
+A cloud-native AI agent system for automated software development workflows. Built as a monorepo with separate frontend, backend, and infrastructure components, designed for deployment on AWS using serverless and container technologies.
 
 ## ⚠️ Security Warning
 
@@ -13,60 +13,147 @@ A headless, non-interactive containerized Claude Code agent for automated GitHub
 
 Always review the repository and ensure you trust the codebase before running the agent.
 
+## Project Structure
+
+This is a monorepo containing:
+
+```
+claude-agent/
+├── frontend/          # Next.js web application (deployed to S3/CloudFront)
+├── backend/           # FastAPI serverless backend (AWS Lambda)
+├── infrastructure/    # Terraform/CDK infrastructure as code
+├── shared/           # Shared TypeScript types and schemas
+├── scripts/          # Build and deployment scripts
+└── docs/             # Project documentation
+```
+
 ## Features
 
-- **Multi-Mode Operation**: Four distinct modes for different use cases
-  - Write mode (default): Makes code changes and creates PRs
-  - Review mode: Analyzes pull requests without making changes
-  - Ask mode: Answers questions about codebases
-  - Analyze mode: Performs security and quality analysis
-- **Containerized Execution**: All operations run in isolated Docker containers
-- **GitHub Integration**: Full support for issues, PRs, and GitHub CLI
-- **Artifact Persistence**: Analysis outputs saved locally for review and CI/CD
-- **Smart Branch Management**: Automatic branch creation for write operations
-- **Multiple Output Formats**: Standard, JSON, and background modes
+- **Cloud-Native Architecture**: Built for AWS with Lambda, ECS, S3, and CloudFront
+- **Multi-Provider Support**: Works with GitHub, GitLab, and Bitbucket
+- **Type-Safe Development**: Shared types between frontend and backend
+- **Serverless Backend**: FastAPI on AWS Lambda for scalability
+- **Container-Based Agent**: Runs on ECS Fargate for isolation
+- **Modern Frontend**: Next.js with TypeScript and React
+
+## Prerequisites
+
+- Node.js 18+ and npm 9+
+- Python 3.11+
+- Docker
+- AWS CLI configured (for deployment)
+- uv (Python package manager) - Install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### 1. Clone the Repository
 
 ```bash
-# Navigate to where you cloned this repository
-cd /path/to/claude-agent
-
-# Build the Docker image
-docker build -t claude-code-agent .
+git clone https://github.com/willtech3/claude-agent.git
+cd claude-agent
 ```
 
-### 2. Set up the Command
-
-Add the script to your PATH by creating a symbolic link:
+### 2. Install Dependencies
 
 ```bash
-# Create a symlink in a directory that's in your PATH
-# Common options include ~/.local/bin, ~/bin, or /usr/local/bin
-ln -s /path/to/claude-agent/claude-agent ~/.local/bin/claude-agent
+# Install Node.js dependencies (frontend and shared)
+npm install
 
-# Make sure the target directory exists first:
-mkdir -p ~/.local/bin
+# Install Python dependencies (backend)
+cd backend
+uv sync
+cd ..
 ```
 
-Alternatively, add the claude-agent directory to your PATH:
+### 3. Set up Environment Variables
 
 ```bash
-# Add to ~/.bashrc or ~/.zshrc
-export PATH="/path/to/claude-agent:$PATH"
+# Copy example environment files
+cp frontend/.env.example frontend/.env.local
+cp backend/.env.example backend/.env
+
+# Edit the files with your configuration
 ```
 
-### 3. Ensure GitHub Token is Set
+### 4. Run Local Development
 
 ```bash
-export GH_TOKEN=your_github_token_here
+# Start all services with Docker Compose
+docker-compose up -d
+
+# In separate terminals:
+
+# Frontend (Next.js)
+npm run dev
+
+# Backend (FastAPI with SAM)
+cd backend
+sam local start-api
+
+# Agent (Docker)
+cd agent
+docker build -t claude-agent .
+docker run -it claude-agent
 ```
 
-## Usage
+## Development
 
-The Claude Agent is designed to help with various software development tasks while maintaining isolation. The command takes a repository URL and a prompt:
+### Package Management
+
+This project uses:
+- **npm workspaces** for JavaScript/TypeScript packages (frontend, shared)
+- **uv** for Python packages (backend)
+
+### Shared Types
+
+The `shared` package contains TypeScript types that are used by both frontend and backend:
+
+```typescript
+import { User, Project, Task } from '@claude-agent/shared';
+```
+
+### Running Tests
+
+```bash
+# All tests
+npm test
+
+# Frontend tests
+npm test --workspace=@claude-agent/frontend
+
+# Backend tests
+cd backend && pytest
+
+# Shared types tests
+npm test --workspace=@claude-agent/shared
+```
+
+### Building for Production
+
+```bash
+# Build all packages
+npm run build
+
+# Build frontend only
+npm run build --workspace=@claude-agent/frontend
+
+# Build backend
+cd backend && sam build
+```
+
+## Architecture
+
+The system follows a microservices architecture:
+
+- **Frontend**: Static Next.js app served from S3/CloudFront
+- **API**: FastAPI running on AWS Lambda behind API Gateway
+- **Agent**: Containerized Claude Code running on ECS Fargate
+- **Queue**: SQS for async task processing
+- **Storage**: S3 for artifacts, RDS for data, ElastiCache for caching
+
+## Original CLI Usage (Legacy)
+
+The original Claude Agent CLI is still available for direct usage:
 
 ```bash
 claude-agent <repo-url> "<prompt>" [options]

@@ -1,15 +1,42 @@
 # macOS
 .DS_Store
+Thumbs.db
 
 # Logs
 *.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Environment files
 .env
 .env.local
+.env.*.local
+*.env
 
-# Node
+# Node.js
 node_modules/
+.npm
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Claude configuration
 .claude/
@@ -17,7 +44,37 @@ node_modules/
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+frontend/.next/
+frontend/out/
+backend/.aws-sam/
+backend/samconfig.toml
+shared/dist/
+
+# Coverage
+coverage/
+.coverage
+*.lcov
+.nyc_output/
+
+# Artifacts
+claude-artifacts/
+*.artifact
+
+# Terraform
+infrastructure/*.tfstate
+infrastructure/*.tfstate.*
+infrastructure/.terraform/
+infrastructure/*.tfvars
+
+# Docker
+.docker/
 
 # Temporary files
 *.tmp
 *.temp
+.cache/
