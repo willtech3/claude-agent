@@ -4,7 +4,7 @@ from typing import Dict
 
 import aioboto3
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.config import settings
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 class TaskRequest(BaseModel):
-    prompt: str
+    prompt: str = Field(..., min_length=1, description="The prompt for the task")
 
 
 class TaskResponse(BaseModel):
