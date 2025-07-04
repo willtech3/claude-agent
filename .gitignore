@@ -78,3 +78,8 @@ infrastructure/*.tfvars
 *.tmp
 *.temp
 .cache/
+
+# Documentation planning files
+CLOUD_TRANSFORMATION_PLAN.md
+MINIMAL_POC_PLAN.md
+SDK_MIGRATION_PLAN.md
