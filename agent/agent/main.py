@@ -12,6 +12,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from agent.health import get_health_status, HealthStatus
 from agent.worker import AgentWorker
+from agent.config import config
 
 logger = structlog.get_logger()
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "agent.main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", "8080")),
-        reload=os.getenv("ENV", "production") == "development",
+        port=config.port,
+        reload=config.environment == "development",
         log_config=None  # Use structlog instead
     )

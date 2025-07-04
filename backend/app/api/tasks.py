@@ -1,51 +1,44 @@
-from typing import List
+import json
+import uuid
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+import aioboto3
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
-from app.api.auth import oauth2_scheme
+from app.core.config import settings
 
 router = APIRouter()
 
 
-class Task(BaseModel):
-    id: str
-    project_id: str
-    title: str
-    description: str | None = None
-    status: str = "pending"
-    priority: str = "medium"
+class TaskRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, description="The prompt for the task")
 
 
-@router.get("/", response_model=List[Task])
-async def list_tasks(project_id: str, token: str = Depends(oauth2_scheme)):
-    # TODO: Implement actual task listing
-    return [
-        {
-            "id": "task-1",
-            "project_id": project_id,
-            "title": "Sample Task",
-            "description": "A sample task",
-            "status": "pending",
-            "priority": "medium"
-        }
-    ]
+class TaskResponse(BaseModel):
+    task_id: str
+    status: str
 
 
-@router.post("/", response_model=Task)
-async def create_task(task: Task, token: str = Depends(oauth2_scheme)):
-    # TODO: Implement actual task creation
-    return task
+@router.post("/", response_model=TaskResponse)
+async def create_task(request: TaskRequest) -> TaskResponse:
+    """Create a new task and send it to SQS queue."""
+    # Generate task ID
+    task_id = str(uuid.uuid4())
 
+    # Prepare SQS message
+    message = {"task_id": task_id, "prompt": request.prompt}
 
-@router.get("/{task_id}", response_model=Task)
-async def get_task(task_id: str, token: str = Depends(oauth2_scheme)):
-    # TODO: Implement actual task retrieval
-    return {
-        "id": task_id,
-        "project_id": "proj-1",
-        "title": "Sample Task",
-        "description": "A sample task",
-        "status": "pending",
-        "priority": "medium"
-    }
+    try:
+        # Create SQS client
+        session = aioboto3.Session()
+        async with session.client(
+            "sqs", region_name=settings.AWS_REGION, endpoint_url=settings.AWS_ENDPOINT_URL
+        ) as sqs:
+            # Send message to SQS
+            await sqs.send_message(
+                QueueUrl=settings.TASK_QUEUE_URL, MessageBody=json.dumps(message)
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to queue task: {e!s}") from e
+
+    return TaskResponse(task_id=task_id, status="queued")
