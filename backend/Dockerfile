@@ -13,21 +13,24 @@ RUN apt-get update && apt-get install -y \
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy requirements first for better caching
-COPY requirements.txt .
-RUN uv pip install --system -r requirements.txt
+COPY pyproject.toml .
+COPY README.md .
+
+# Install Python dependencies using uv (including dev dependencies for local development)
+RUN uv pip install --system -e ".[dev]"
 
 # Copy application code
 COPY . .
 
 # Create non-root user
-RUN useradd -m -u 1000 agent && chown -R agent:agent /app
+RUN useradd -m -u 1000 api && chown -R api:api /app
 
-USER agent
+USER api
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8080/health').raise_for_status()"
+    CMD curl -f http://localhost:8000/health || exit 1
 
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["python", "-m", "agent.main"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

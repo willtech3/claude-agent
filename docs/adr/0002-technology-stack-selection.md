@@ -33,7 +33,7 @@ We will use the following technology stack:
 
 ### Backend
 - **FastAPI**: Modern Python web framework with automatic API documentation
-- **Python 3.11+**: Latest stable Python with performance improvements
+- **Python 3.12+**: Latest stable Python with performance improvements
 - **Pydantic**: Data validation and settings management
 - **SQLAlchemy 2.0**: Modern ORM with async support
 
