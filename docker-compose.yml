@@ -7,12 +7,19 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,dynamodb,lambda
+      - SERVICES=s3,sqs,dynamodb,lambda,ecs,ecr,logs
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
       - "./tmp/localstack:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # PostgreSQL Database
   postgres:
@@ -25,6 +32,11 @@ services:
       POSTGRES_PASSWORD: claude_dev_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claude -d claude_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Redis Cache
   redis:
@@ -34,6 +46,33 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Agent Service (ECS simulation)
+  agent:
+    build: ./agent
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=development
+      - REDIS_URL=redis://redis:6379
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/claude-agent-tasks
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    depends_on:
+      localstack:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./agent:/app
+    command: ["python", "-m", "agent.main"]
 
 volumes:
   postgres_data:
