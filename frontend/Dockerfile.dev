@@ -2,8 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies for development
-RUN apk add --no-cache libc6-compat
+# Install dependencies for development and health check
+RUN apk add --no-cache libc6-compat curl
 
 # Copy package files
 COPY package*.json ./

@@ -9,6 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql://claude:claude_dev_password@postgres:5432/claude_agent
       - REDIS_URL=redis://redis:6379
       - SQS_QUEUE_URL=http://localstack:4566/000000000000/tasks
       - AWS_ENDPOINT_URL=http://localstack:4566
@@ -18,6 +19,7 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
+      - postgres
       - redis
       - localstack
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -55,6 +57,12 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
 
   # WebSocket pub/sub
   redis:
@@ -64,6 +72,23 @@ services:
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=claude
+      - POSTGRES_PASSWORD=claude_dev_password
+      - POSTGRES_DB=claude_agent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claude"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # AWS service emulation (SQS)
   localstack:
@@ -82,3 +107,4 @@ services:
 
 volumes:
   redis_data:
+  postgres_data:
