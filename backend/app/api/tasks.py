@@ -1,6 +1,5 @@
 import json
 import uuid
-from typing import Dict
 
 import aioboto3
 from fastapi import APIRouter, HTTPException
@@ -25,27 +24,21 @@ async def create_task(request: TaskRequest) -> TaskResponse:
     """Create a new task and send it to SQS queue."""
     # Generate task ID
     task_id = str(uuid.uuid4())
-    
+
     # Prepare SQS message
-    message = {
-        "task_id": task_id,
-        "prompt": request.prompt
-    }
-    
+    message = {"task_id": task_id, "prompt": request.prompt}
+
     try:
         # Create SQS client
         session = aioboto3.Session()
         async with session.client(
-            "sqs",
-            region_name=settings.AWS_REGION,
-            endpoint_url=settings.AWS_ENDPOINT_URL
+            "sqs", region_name=settings.AWS_REGION, endpoint_url=settings.AWS_ENDPOINT_URL
         ) as sqs:
             # Send message to SQS
             await sqs.send_message(
-                QueueUrl=settings.TASK_QUEUE_URL,
-                MessageBody=json.dumps(message)
+                QueueUrl=settings.TASK_QUEUE_URL, MessageBody=json.dumps(message)
             )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to queue task: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail=f"Failed to queue task: {e!s}") from e
+
     return TaskResponse(task_id=task_id, status="queued")

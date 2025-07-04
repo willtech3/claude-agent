@@ -1,13 +1,13 @@
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from mangum import Mangum
 
-from app.api import auth, projects, tasks, providers, git_providers, websocket
+from app.api import auth, git_providers, projects, providers, tasks, websocket
 from app.core.config import settings
 from app.core.database import init_db
 
@@ -20,16 +20,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Shutdown
 
 
-app = FastAPI(
-    title="Claude Agent API",
-    version="0.1.0",
-    lifespan=lifespan
-)
+app = FastAPI(title="Claude Agent API", version="0.1.0", lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,18 +43,12 @@ app.include_router(websocket.router, tags=["websocket"])
 # Exception handlers
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
-    return JSONResponse(
-        status_code=400,
-        content={"detail": str(exc)}
-    )
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 @app.get("/")
@@ -68,10 +58,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {
-        "status": "healthy",
-        "environment": os.getenv("ENVIRONMENT", "development")
-    }
+    return {"status": "healthy", "environment": os.getenv("ENVIRONMENT", "development")}
 
 
 # Lambda handler
