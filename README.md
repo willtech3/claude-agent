@@ -38,8 +38,8 @@ claude-agent/
 
 ## Prerequisites
 
-- Node.js 18+ and npm 9+
-- Python 3.11+
+- Node.js 20+ (LTS) and npm 10+
+- Python 3.12+
 - Docker
 - AWS CLI configured (for deployment)
 - uv (Python package manager) - Install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`

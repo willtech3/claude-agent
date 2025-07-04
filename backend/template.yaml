@@ -5,7 +5,7 @@ Description: Claude Agent Backend API
 Globals:
   Function:
     Timeout: 30
-    Runtime: python3.11
+    Runtime: python3.12
     Environment:
       Variables:
         ENVIRONMENT: !Ref Environment

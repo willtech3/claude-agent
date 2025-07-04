@@ -238,7 +238,7 @@ agent/
 │   └── sqs_handler.py     # Queue integration
 ├── config/
 │   └── auth.yaml          # Auth configuration
-├── Dockerfile             # FROM python:3.11
+├── Dockerfile             # FROM python:3.12
 └── requirements.txt       # claude-code, boto3, etc.
 ```
 

@@ -83,3 +83,6 @@ infrastructure/*.tfvars
 CLOUD_TRANSFORMATION_PLAN.md
 MINIMAL_POC_PLAN.md
 SDK_MIGRATION_PLAN.md
+# Local development
+workspaces/
+
