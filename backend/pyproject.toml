@@ -20,6 +20,8 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.0",
     "mangum>=0.17.0",
+    "websockets>=12.0",
+    "aioboto3>=13.0.0",
 ]
 
 [project.optional-dependencies]

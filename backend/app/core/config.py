@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # SQS Configuration
+    TASK_QUEUE_URL: str = "http://localhost:4566/000000000000/tasks"
+    AWS_REGION: str = "us-east-1"
+    
     # Git Provider Tokens
     GITHUB_TOKEN: str | None = None
     GITLAB_TOKEN: str | None = None
