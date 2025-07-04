@@ -5,8 +5,15 @@ set -e
 
 echo "Starting Claude Agent development environment..."
 
+# Get the project name from docker-compose to ensure we use the correct network
+PROJECT_NAME=$(basename $(pwd))
+NETWORK_NAME="${PROJECT_NAME}_default"
+
 # Ensure docker network exists
-docker network create repo_default 2>/dev/null || true
+if ! docker network ls | grep -q "$NETWORK_NAME"; then
+    echo "Creating Docker network: $NETWORK_NAME"
+    docker network create "$NETWORK_NAME"
+fi
 
 # Start infrastructure services
 echo "Starting infrastructure services..."
@@ -28,7 +35,8 @@ docker-compose up -d agent
 # Start API with SAM
 echo "Starting API with SAM..."
 cd backend
-sam local start-api --docker-network repo_default &
+sam local start-api --docker-network "$NETWORK_NAME" --port 3001 &
+SAM_PID=$!
 cd ..
 
 # Instructions
@@ -43,4 +51,8 @@ echo "  - LocalStack: http://localhost:4566"
 echo "  - PostgreSQL: localhost:5432"
 echo "  - Redis: localhost:6379"
 echo ""
-echo "To stop all services: docker-compose down"
+echo "To stop all services:"
+echo "  - Docker services: docker-compose down"
+echo "  - API: kill $SAM_PID"
+echo ""
+echo "Or run: ./scripts/stop-dev.sh"

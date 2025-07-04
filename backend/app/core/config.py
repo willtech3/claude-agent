@@ -14,6 +14,15 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # Git Provider Tokens
+    GITHUB_TOKEN: str | None = None
+    GITLAB_TOKEN: str | None = None
+    BITBUCKET_TOKEN: str | None = None
+    
+    # AI Provider Tokens
+    ANTHROPIC_API_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
+    
     @property
     def ALLOWED_ORIGINS(self) -> List[str]:
         origins_str = os.getenv("ALLOWED_ORIGINS", '["http://localhost:3000"]')
@@ -28,3 +37,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings
