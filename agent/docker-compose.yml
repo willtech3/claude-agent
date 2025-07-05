@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  claude-wrapper:
+    build: .
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/tasks
+      - REDIS_URL=redis://redis:6379
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./workspaces:/workspaces
+      - ./sessions:/sessions
+    networks:
+      - agent-network
+    depends_on:
+      - redis
+      - localstack
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - agent-network
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - DEBUG=1
+    volumes:
+      - "./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
+    networks:
+      - agent-network
+
+networks:
+  agent-network:
+    driver: bridge

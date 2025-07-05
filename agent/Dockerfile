@@ -37,12 +37,12 @@ RUN uv pip install --system -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for sessions and artifacts
-RUN mkdir -p /tmp/claude-sessions /tmp/claude-artifacts
+# Create directories for wrapper workspaces and sessions
+RUN mkdir -p /workspaces /sessions /tmp/claude-sessions /tmp/claude-artifacts
 
 # Create non-root user
 RUN useradd -m -u 1000 agent && \
-    chown -R agent:agent /app /tmp/claude-sessions /tmp/claude-artifacts && \
+    chown -R agent:agent /app /workspaces /sessions /tmp/claude-sessions /tmp/claude-artifacts && \
     # Allow agent user to run git commands
     git config --global --add safe.directory '*'
 
@@ -52,10 +52,8 @@ USER agent
 ENV PYTHONUNBUFFERED=1
 ENV NODE_ENV=production
 
-# Health check endpoint
+# Health check - check if the wrapper process is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8080/health').raise_for_status()"
+    CMD pgrep -f "python -m wrapper.main" || exit 1
 
-EXPOSE 8080
-
-CMD ["python", "-m", "agent.main"]
+CMD ["python", "-m", "wrapper.main"]
