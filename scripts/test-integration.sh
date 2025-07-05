@@ -32,8 +32,8 @@ check_service() {
 # Check each service
 services_ok=true
 
-check_service "Redis" "docker-compose -f docker-compose.local.yml exec -T redis redis-cli ping" || services_ok=false
-check_service "PostgreSQL" "docker-compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres" || services_ok=false
+check_service "Redis" "docker compose -f docker-compose.local.yml exec -T redis redis-cli ping" || services_ok=false
+check_service "PostgreSQL" "docker compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres" || services_ok=false
 check_service "LocalStack" "curl -s http://localhost:4566/_localstack/health | grep -q '\"sqs\": \"available\"'" || services_ok=false
 check_service "Backend API" "curl -s http://localhost:8000/health" || services_ok=false
 
@@ -133,8 +133,8 @@ echo "  pytest tests/integration/test_poc_integration.py -v"
 
 echo ""
 echo -e "${YELLOW}To view service logs:${NC}"
-echo "  docker-compose -f docker-compose.local.yml logs -f"
+echo "  docker compose -f docker-compose.local.yml logs -f"
 
 echo ""
 echo -e "${YELLOW}To debug a specific service:${NC}"
-echo "  docker-compose -f docker-compose.local.yml logs <service-name>"
+echo "  docker compose -f docker-compose.local.yml logs <service-name>"

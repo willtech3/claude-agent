@@ -9,9 +9,15 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Starting Claude Agent POC Services...${NC}"
 
-# Check if docker-compose is available
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}Error: docker-compose not found. Please install Docker and docker-compose.${NC}"
+# Check if docker compose is available
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}Error: docker not found. Please install Docker Desktop.${NC}"
+    exit 1
+fi
+
+# Check if docker compose command works
+if ! docker compose version &> /dev/null; then
+    echo -e "${RED}Error: docker compose not found. Please install Docker Desktop with Compose v2.${NC}"
     exit 1
 fi
 
@@ -23,11 +29,11 @@ fi
 
 # Stop any existing services
 echo -e "${YELLOW}Stopping any existing services...${NC}"
-docker-compose -f docker-compose.local.yml down
+docker compose -f docker-compose.local.yml down
 
 # Start infrastructure services
 echo -e "${GREEN}Starting infrastructure services...${NC}"
-docker-compose -f docker-compose.local.yml up -d
+docker compose -f docker-compose.local.yml up -d
 
 # Wait for services to be ready
 echo -e "${YELLOW}Waiting for services to be healthy...${NC}"
@@ -38,20 +44,20 @@ echo -e "${GREEN}Checking service health...${NC}"
 
 # Check Redis
 echo -n "Redis: "
-if docker-compose -f docker-compose.local.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
+if docker compose -f docker-compose.local.yml exec -T redis redis-cli ping > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗${NC}"
-    echo -e "${RED}Redis is not responding. Check logs with: docker-compose logs redis${NC}"
+    echo -e "${RED}Redis is not responding. Check logs with: docker compose logs redis${NC}"
 fi
 
 # Check PostgreSQL
 echo -n "PostgreSQL: "
-if docker-compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+if docker compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗${NC}"
-    echo -e "${RED}PostgreSQL is not responding. Check logs with: docker-compose logs postgres${NC}"
+    echo -e "${RED}PostgreSQL is not responding. Check logs with: docker compose logs postgres${NC}"
 fi
 
 # Check LocalStack
@@ -114,7 +120,7 @@ echo -e "2. Start the frontend (see above)"
 echo -e "3. Build and run the agent (see above)"
 echo ""
 echo -e "${YELLOW}To view logs:${NC}"
-echo -e "  docker-compose -f docker-compose.local.yml logs -f"
+echo -e "  docker compose -f docker-compose.local.yml logs -f"
 echo ""
 echo -e "${YELLOW}To stop all services:${NC}"
-echo -e "  docker-compose -f docker-compose.local.yml down"
+echo -e "  docker compose -f docker-compose.local.yml down"

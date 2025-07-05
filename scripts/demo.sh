@@ -132,8 +132,8 @@ check_service() {
 }
 
 check_service "Docker" "docker --version"
-check_service "Redis" "docker-compose -f docker-compose.local.yml exec -T redis redis-cli ping"
-check_service "PostgreSQL" "docker-compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres"
+check_service "Redis" "docker compose -f docker-compose.local.yml exec -T redis redis-cli ping"
+check_service "PostgreSQL" "docker compose -f docker-compose.local.yml exec -T postgres pg_isready -U postgres"
 check_service "LocalStack" "curl -s http://localhost:4566/_localstack/health | grep -q '\"sqs\": \"available\"'"
 check_service "Backend API" "curl -s $API_URL/health"
 
@@ -229,7 +229,7 @@ echo "✓ Architecture overview"
 echo ""
 echo -e "${YELLOW}All generated files are in the workspaces/ directory${NC}"
 echo -e "${YELLOW}To explore further:${NC}"
-echo "  • View logs: docker-compose -f docker-compose.local.yml logs -f"
+echo "  • View logs: docker compose -f docker-compose.local.yml logs -f"
 echo "  • Try the frontend: cd frontend && npm run dev"
 echo "  • Read the docs: cat README.md"
 echo ""
