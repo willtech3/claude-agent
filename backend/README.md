@@ -11,6 +11,10 @@ uv sync
 # Run locally with SAM
 sam local start-api
 
+# Run locally with Uvicorn (for development)
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
 # Run tests
 pytest
 

@@ -1,19 +1,33 @@
+FROM node:20-slim AS claude-installer
+
+# Install Claude Code CLI
+RUN npm install -g @anthropic-ai/claude-code
+
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies, uv, and Node.js (for Claude Code CLI)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    curl \
+    # Required for git operations
     git \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    # Required for Claude Code
+    nodejs npm \
+    # GitHub CLI for PR operations
+    gh \
+    # Required for file operations
+    ripgrep \
+    # General utilities
+    curl jq \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && npm install -g @anthropic/claude-code
+    && rm -rf /var/lib/apt/lists/*
 
-# Add uv to PATH
+# Copy Claude Code from the installer stage
+COPY --from=claude-installer /usr/local/lib/node_modules/@anthropic-ai/claude-code /usr/local/lib/node_modules/@anthropic-ai/claude-code
+COPY --from=claude-installer /usr/local/bin/claude /usr/local/bin/claude
+
+# Install uv for Python package management
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy requirements first for better caching
@@ -23,18 +37,22 @@ RUN uv pip install --system -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create workspaces and sessions directories
-RUN mkdir -p /workspaces /sessions
+# Create directories for wrapper workspaces and sessions
+RUN mkdir -p /workspaces /sessions /tmp/claude-sessions /tmp/claude-artifacts
 
 # Create non-root user
-RUN useradd -m -u 1000 agent && chown -R agent:agent /app /workspaces /sessions
+RUN useradd -m -u 1000 agent && \
+    chown -R agent:agent /app /workspaces /sessions /tmp/claude-sessions /tmp/claude-artifacts && \
+    # Allow agent user to run git commands
+    git config --global --add safe.directory '*'
 
 USER agent
 
-# Set default environment variables
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV NODE_ENV=production
 
-# Health check - check if the process is running
+# Health check - check if the wrapper process is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pgrep -f "python -m wrapper.main" || exit 1
 

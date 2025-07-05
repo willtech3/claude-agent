@@ -2,9 +2,13 @@ import asyncio
 import os
 from typing import Optional
 
-import boto3
 import structlog
 from redis import asyncio as aioredis
+
+from agent.session import SessionManager
+from agent.claude_code import ClaudeCodeWrapper
+from agent.sqs_handler import SQSTaskHandler
+from agent.config import config
 
 logger = structlog.get_logger()
 
@@ -13,8 +17,11 @@ class AgentWorker:
     def __init__(self):
         self.running = False
         self.redis_client: Optional[aioredis.Redis] = None
-        self.sqs_client = None
-        self.queue_url = os.getenv("SQS_QUEUE_URL", "")
+        
+        # Initialize components
+        self.session_manager = SessionManager()
+        self.claude_wrapper = ClaudeCodeWrapper(self.session_manager)
+        self.sqs_handler = SQSTaskHandler(self.claude_wrapper)
         
     async def start(self):
         self.running = True
@@ -40,26 +47,28 @@ class AgentWorker:
             await self.redis_client.close()
             
     async def _init_connections(self):
-        # Initialize Redis
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-        self.redis_client = await aioredis.from_url(redis_url)
-        
-        # Initialize SQS (using boto3 for simplicity, could use aioboto3)
-        if os.getenv("AWS_ENDPOINT_URL"):
-            self.sqs_client = boto3.client(
-                'sqs',
-                endpoint_url=os.getenv("AWS_ENDPOINT_URL"),
-                region_name=os.getenv("AWS_REGION", "us-east-1"),
-                aws_access_key_id="test",
-                aws_secret_access_key="test"
-            )
-        else:
-            self.sqs_client = boto3.client('sqs')
-            
+        # Initialize Redis (optional, for caching/state)
+        if config.redis_url:
+            try:
+                self.redis_client = await aioredis.from_url(config.redis_url)
+                logger.info("Connected to Redis")
+            except Exception as e:
+                logger.warning("Failed to connect to Redis", error=str(e))
+                
     async def _process_messages(self):
-        if not self.queue_url:
-            await asyncio.sleep(10)  # No queue configured
+        # Receive messages from SQS
+        messages = await self.sqs_handler.receive_messages()
+        
+        if not messages:
+            # No messages, short sleep
+            await asyncio.sleep(1)
             return
             
-        # This would be replaced with actual message processing
-        await asyncio.sleep(1)  # Simulate work
+        # Process messages concurrently (up to a limit)
+        tasks = []
+        for message in messages[:5]:  # Process max 5 messages concurrently
+            task = asyncio.create_task(self.sqs_handler.process_message(message))
+            tasks.append(task)
+            
+        # Wait for all tasks to complete
+        await asyncio.gather(*tasks, return_exceptions=True)
