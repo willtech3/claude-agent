@@ -33,7 +33,7 @@ docker compose -f docker-compose.local.yml down
 
 # Start infrastructure services
 echo -e "${GREEN}Starting infrastructure services...${NC}"
-docker compose -f docker-compose.local.yml up -d
+docker compose -f docker-compose.local.yml up -d redis postgres localstack
 
 # Wait for services to be ready
 echo -e "${YELLOW}Waiting for services to be healthy...${NC}"
