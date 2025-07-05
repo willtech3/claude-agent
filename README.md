@@ -96,6 +96,75 @@ docker build -t claude-agent .
 docker run -it claude-agent
 ```
 
+## POC Quick Start
+
+The POC provides a simplified way to test the core functionality:
+
+### 1. Start All Services
+
+```bash
+# Start infrastructure and run the POC
+./scripts/start-poc.sh
+```
+
+This starts:
+- LocalStack (SQS, S3)
+- Redis
+- PostgreSQL
+- Creates necessary queues
+
+### 2. Start Components
+
+In separate terminals:
+
+```bash
+# Terminal 1: Backend API
+cd backend && sam local start-api
+
+# Terminal 2: Frontend (optional)
+cd frontend && npm run dev
+
+# Terminal 3: Agent
+cd agent
+docker build -t claude-agent .
+docker run -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -e SQS_QUEUE_URL=http://localstack:4566/000000000000/tasks \
+  -e AWS_ENDPOINT_URL=http://localstack:4566 \
+  -v $(pwd)/../workspaces:/workspaces \
+  claude-agent
+```
+
+### 3. Run Tests
+
+```bash
+# Quick integration test
+./scripts/test-integration.sh
+
+# Full test suite
+pytest tests/integration/test_poc_integration.py -v
+```
+
+### 4. Try the Demo
+
+```bash
+# Interactive demo showcasing all features
+./scripts/demo.sh
+```
+
+The demo will:
+- Create various types of tasks
+- Show real-time output streaming
+- Generate files in workspaces/
+- Demonstrate error handling
+
+### 5. Access the UI
+
+Open http://localhost:3000 to use the web interface (if frontend is running).
+
+### Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues and solutions.
+
 ## Development
 
 ### Package Management
