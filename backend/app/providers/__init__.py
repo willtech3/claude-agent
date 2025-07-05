@@ -1,12 +1,12 @@
-from app.providers.factory import get_git_provider, ProviderConfig, ProviderType
-from app.providers.base import GitProvider, Repository, Issue, PullRequest
+from app.providers.base import GitProvider, Issue, PullRequest, Repository
+from app.providers.factory import ProviderConfig, ProviderType, get_git_provider
 
 __all__ = [
-    "get_git_provider",
-    "ProviderConfig", 
-    "ProviderType",
     "GitProvider",
-    "Repository",
     "Issue",
-    "PullRequest"
+    "ProviderConfig",
+    "ProviderType",
+    "PullRequest",
+    "Repository",
+    "get_git_provider"
 ]

@@ -1,13 +1,13 @@
-from typing import Dict, List, Optional
-import httpx
 from datetime import datetime
 
-from app.providers.base import GitProvider, Repository, Issue, PullRequest
+import httpx
+
+from app.providers.base import GitProvider, Issue, PullRequest, Repository
 
 
 class GitHubProvider(GitProvider):
     """GitHub provider implementation"""
-    
+
     def __init__(self, token: str, base_url: str = "https://api.github.com"):
         self.token = token
         self.base_url = base_url
@@ -15,7 +15,7 @@ class GitHubProvider(GitProvider):
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github.v3+json"
         }
-    
+
     async def get_repository(self, repo_id: str) -> Repository:
         """Get repository information from GitHub"""
         async with httpx.AsyncClient() as client:
@@ -25,7 +25,7 @@ class GitHubProvider(GitProvider):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return Repository(
                 id=str(data["id"]),
                 name=data["name"],
@@ -36,18 +36,18 @@ class GitHubProvider(GitProvider):
                 url=data["html_url"],
                 clone_url=data["clone_url"]
             )
-    
-    async def list_repositories(self, user_id: Optional[str] = None) -> List[Repository]:
+
+    async def list_repositories(self, user_id: str | None = None) -> list[Repository]:
         """List repositories for authenticated user or specified user"""
         async with httpx.AsyncClient() as client:
             if user_id:
                 url = f"{self.base_url}/users/{user_id}/repos"
             else:
                 url = f"{self.base_url}/user/repos"
-            
+
             response = await client.get(url, headers=self.headers)
             response.raise_for_status()
-            
+
             repos = []
             for data in response.json():
                 repos.append(Repository(
@@ -60,9 +60,9 @@ class GitHubProvider(GitProvider):
                     url=data["html_url"],
                     clone_url=data["clone_url"]
                 ))
-            
+
             return repos
-    
+
     async def get_issue(self, repo_id: str, issue_number: int) -> Issue:
         """Get issue details from GitHub"""
         async with httpx.AsyncClient() as client:
@@ -72,7 +72,7 @@ class GitHubProvider(GitProvider):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return Issue(
                 id=str(data["id"]),
                 number=data["number"],
@@ -84,8 +84,8 @@ class GitHubProvider(GitProvider):
                 created_at=datetime.fromisoformat(data["created_at"].replace("Z", "+00:00")),
                 updated_at=datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
             )
-    
-    async def list_issues(self, repo_id: str, state: str = "open") -> List[Issue]:
+
+    async def list_issues(self, repo_id: str, state: str = "open") -> list[Issue]:
         """List issues for a repository"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -94,13 +94,13 @@ class GitHubProvider(GitProvider):
                 params={"state": state}
             )
             response.raise_for_status()
-            
+
             issues = []
             for data in response.json():
                 # Skip pull requests (GitHub returns them in issues endpoint)
                 if "pull_request" in data:
                     continue
-                    
+
                 issues.append(Issue(
                     id=str(data["id"]),
                     number=data["number"],
@@ -112,11 +112,11 @@ class GitHubProvider(GitProvider):
                     created_at=datetime.fromisoformat(data["created_at"].replace("Z", "+00:00")),
                     updated_at=datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
                 ))
-            
+
             return issues
-    
+
     async def create_pull_request(
-        self, 
+        self,
         repo_id: str,
         title: str,
         body: str,
@@ -137,7 +137,7 @@ class GitHubProvider(GitProvider):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return PullRequest(
                 id=str(data["id"]),
                 number=data["number"],
@@ -150,7 +150,7 @@ class GitHubProvider(GitProvider):
                 created_at=datetime.fromisoformat(data["created_at"].replace("Z", "+00:00")),
                 updated_at=datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
             )
-    
+
     async def get_pull_request(self, repo_id: str, pr_number: int) -> PullRequest:
         """Get pull request details from GitHub"""
         async with httpx.AsyncClient() as client:
@@ -160,7 +160,7 @@ class GitHubProvider(GitProvider):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return PullRequest(
                 id=str(data["id"]),
                 number=data["number"],
@@ -173,8 +173,8 @@ class GitHubProvider(GitProvider):
                 created_at=datetime.fromisoformat(data["created_at"].replace("Z", "+00:00")),
                 updated_at=datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
             )
-    
-    async def list_pull_requests(self, repo_id: str, state: str = "open") -> List[PullRequest]:
+
+    async def list_pull_requests(self, repo_id: str, state: str = "open") -> list[PullRequest]:
         """List pull requests for a repository"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -183,7 +183,7 @@ class GitHubProvider(GitProvider):
                 params={"state": state}
             )
             response.raise_for_status()
-            
+
             prs = []
             for data in response.json():
                 prs.append(PullRequest(
@@ -198,5 +198,5 @@ class GitHubProvider(GitProvider):
                     created_at=datetime.fromisoformat(data["created_at"].replace("Z", "+00:00")),
                     updated_at=datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
                 ))
-            
+
             return prs

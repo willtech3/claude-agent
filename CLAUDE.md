@@ -19,6 +19,8 @@
 7. **🌿 ALWAYS use feature branches** - Never commit directly to main
 8. **🔄 ALWAYS create pull requests** - All changes go through PR review
 9. **📖 ALWAYS follow architecture** - Respect layer boundaries
+10. **🔧 ALWAYS use proper environment** - Backend: `cd backend && uv run`, Frontend: `cd frontend && npm`
+11. **✅ ALWAYS run code quality checks** - Use `make check` (or `make backend-check`/`make frontend-check`) before committing
 
 ## 🏗️ Architecture Constraints (IMMUTABLE)
 

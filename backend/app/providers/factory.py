@@ -1,4 +1,3 @@
-from typing import Dict, Any
 from enum import Enum
 
 from app.providers.base import GitProvider
@@ -25,11 +24,10 @@ def get_git_provider(config: ProviderConfig) -> GitProvider:
             token=config.config.get("token"),
             base_url=config.config.get("base_url", "https://api.github.com")
         )
-    elif config.type == ProviderType.GITLAB:
+    if config.type == ProviderType.GITLAB:
         # TODO: Implement GitLabProvider
         raise NotImplementedError("GitLab provider not yet implemented")
-    elif config.type == ProviderType.BITBUCKET:
+    if config.type == ProviderType.BITBUCKET:
         # TODO: Implement BitbucketProvider
         raise NotImplementedError("Bitbucket provider not yet implemented")
-    else:
-        raise ValueError(f"Unknown provider type: {config.type}")
+    raise ValueError(f"Unknown provider type: {config.type}")

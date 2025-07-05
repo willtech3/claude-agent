@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import List, Optional
 
-from app.providers.factory import get_git_provider, ProviderConfig, ProviderType
-from app.providers.base import Repository, Issue, PullRequest, GitProvider
-from app.core.config import get_settings
+from fastapi import APIRouter, Depends, Header, HTTPException
+
 from app.api.auth import oauth2_scheme
+from app.core.config import get_settings
+from app.providers.base import GitProvider, Issue, PullRequest, Repository
+from app.providers.factory import ProviderConfig, ProviderType, get_git_provider
 
 router = APIRouter()
 settings = get_settings()
@@ -12,7 +12,7 @@ settings = get_settings()
 
 async def get_provider(
     provider_id: str,
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     user_token: str = Depends(oauth2_scheme)
 ) -> GitProvider:
     """Get provider instance based on provider ID"""
@@ -20,7 +20,7 @@ async def get_provider(
         provider_type = ProviderType(provider_id)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid provider: {provider_id}")
-    
+
     # Use provided token or fall back to settings
     token = x_provider_token
     if not token:
@@ -30,9 +30,9 @@ async def get_provider(
             token = settings.GITLAB_TOKEN
         else:
             raise HTTPException(status_code=400, detail=f"No token configured for {provider_id}")
-    
+
     config = ProviderConfig(provider_type, token=token)
-    
+
     try:
         return get_git_provider(config)
     except NotImplementedError:
@@ -49,11 +49,11 @@ async def list_git_providers(token: str = Depends(oauth2_scheme)):
     ]
 
 
-@router.get("/{provider_id}/repositories", response_model=List[Repository])
+@router.get("/{provider_id}/repositories", response_model=list[Repository])
 async def list_repositories(
     provider_id: str,
-    user_id: Optional[str] = None,
-    x_provider_token: Optional[str] = Header(None),
+    user_id: str | None = None,
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """List repositories for a provider"""
@@ -66,7 +66,7 @@ async def get_repository(
     provider_id: str,
     owner: str,
     repo: str,
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """Get repository details"""
@@ -75,13 +75,13 @@ async def get_repository(
     return await provider.get_repository(repo_id)
 
 
-@router.get("/{provider_id}/repositories/{owner}/{repo}/issues", response_model=List[Issue])
+@router.get("/{provider_id}/repositories/{owner}/{repo}/issues", response_model=list[Issue])
 async def list_issues(
     provider_id: str,
     owner: str,
     repo: str,
     state: str = "open",
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """List issues for a repository"""
@@ -96,7 +96,7 @@ async def get_issue(
     owner: str,
     repo: str,
     issue_number: int,
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """Get issue details"""
@@ -105,13 +105,13 @@ async def get_issue(
     return await provider.get_issue(repo_id, issue_number)
 
 
-@router.get("/{provider_id}/repositories/{owner}/{repo}/pulls", response_model=List[PullRequest])
+@router.get("/{provider_id}/repositories/{owner}/{repo}/pulls", response_model=list[PullRequest])
 async def list_pull_requests(
     provider_id: str,
     owner: str,
     repo: str,
     state: str = "open",
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """List pull requests for a repository"""
@@ -126,7 +126,7 @@ async def get_pull_request(
     owner: str,
     repo: str,
     pr_number: int,
-    x_provider_token: Optional[str] = Header(None),
+    x_provider_token: str | None = Header(None),
     token: str = Depends(oauth2_scheme)
 ):
     """Get pull request details"""
