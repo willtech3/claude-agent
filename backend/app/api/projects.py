@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -16,7 +15,7 @@ class Project(BaseModel):
     status: str = "active"
 
 
-@router.get("/", response_model=List[Project])
+@router.get("/", response_model=list[Project])
 async def list_projects(token: str = Depends(oauth2_scheme)):
     # TODO: Implement actual project listing
     return [

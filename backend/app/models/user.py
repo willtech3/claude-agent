@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import List
 
-from sqlalchemy import String, DateTime, Boolean
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -20,6 +19,6 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-    
+
     # Relationships
-    projects: Mapped[List["Project"]] = relationship(back_populates="owner")
+    projects: Mapped[list["Project"]] = relationship(back_populates="owner")

@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -13,10 +12,10 @@ class Provider(BaseModel):
     name: str
     type: str
     status: str = "active"
-    capabilities: List[str] = []
+    capabilities: list[str] = []
 
 
-@router.get("/", response_model=List[Provider])
+@router.get("/", response_model=list[Provider])
 async def list_providers(token: str = Depends(oauth2_scheme)):
     # TODO: Implement actual provider listing
     return [

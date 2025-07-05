@@ -1,8 +1,9 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, AsyncMock
 
-from app.providers.base import Repository, Issue, PullRequest
+from app.providers.base import Repository
 
 
 @pytest.mark.asyncio
@@ -31,17 +32,17 @@ async def test_list_repositories(client: AsyncClient, auth_headers: dict):
             clone_url="https://github.com/user/test-repo.git"
         )
     ]
-    
+
     with patch("app.api.git_providers.get_provider") as mock_get_provider:
         mock_provider = AsyncMock()
         mock_provider.list_repositories.return_value = mock_repos
         mock_get_provider.return_value = mock_provider
-        
+
         response = await client.get(
             "/api/git-providers/github/repositories",
             headers=auth_headers
         )
-        
+
         assert response.status_code == 200
         repos = response.json()
         assert len(repos) == 1
@@ -61,17 +62,17 @@ async def test_get_repository(client: AsyncClient, auth_headers: dict):
         url="https://github.com/user/test-repo",
         clone_url="https://github.com/user/test-repo.git"
     )
-    
+
     with patch("app.api.git_providers.get_provider") as mock_get_provider:
         mock_provider = AsyncMock()
         mock_provider.get_repository.return_value = mock_repo
         mock_get_provider.return_value = mock_provider
-        
+
         response = await client.get(
             "/api/git-providers/github/repositories/user/test-repo",
             headers=auth_headers
         )
-        
+
         assert response.status_code == 200
         repo = response.json()
         assert repo["name"] == "test-repo"

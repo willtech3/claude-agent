@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import List
 
-from sqlalchemy import String, DateTime, ForeignKey, Enum
+from sqlalchemy import DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -21,7 +20,7 @@ class Project(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     owner: Mapped["User"] = relationship(back_populates="projects")
-    tasks: Mapped[List["Task"]] = relationship(back_populates="project")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="project")
