@@ -4,7 +4,7 @@ pydantic==2.8.0
 httpx==0.27.0
 boto3==1.34.0
 redis==5.0.0
-asyncio==3.4.3
+# asyncio is built into Python 3.12, no need for separate package
 structlog==24.2.0
 prometheus-client==0.20.0
 requests==2.32.3
