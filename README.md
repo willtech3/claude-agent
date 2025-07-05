@@ -79,7 +79,7 @@ cp backend/.env.example backend/.env
 
 ```bash
 # Start all services with Docker Compose
-docker-compose up -d
+docker compose up -d
 
 # In separate terminals:
 

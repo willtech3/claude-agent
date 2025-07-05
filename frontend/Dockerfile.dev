@@ -9,7 +9,8 @@ RUN apk add --no-cache libc6-compat curl
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+# Using npm install instead of npm ci for POC (no package-lock.json yet)
+RUN npm install
 
 # Copy application code
 COPY . .

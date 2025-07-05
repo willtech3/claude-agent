@@ -15,7 +15,7 @@ Run this command to check all services:
 
 #### Symptom
 ```
-Error: docker-compose not found
+Error: docker compose not found
 ```
 
 #### Solution
@@ -41,7 +41,7 @@ lsof -i :3000  # Frontend
 # Kill the process using the port
 kill -9 <PID>
 
-# Or change the port in docker-compose.local.yml
+# Or change the port in docker compose.local.yml
 ```
 
 ---
@@ -192,7 +192,7 @@ PostgreSQL connection refused
 #### Solution
 1. Check PostgreSQL is running:
 ```bash
-docker-compose -f docker-compose.local.yml ps postgres
+docker compose -f docker compose.local.yml ps postgres
 ```
 
 2. Verify credentials in backend/.env:
@@ -212,7 +212,7 @@ Redis connection timeout
 #### Solution
 1. Check Redis is running:
 ```bash
-docker-compose -f docker-compose.local.yml exec redis redis-cli ping
+docker compose -f docker compose.local.yml exec redis redis-cli ping
 ```
 
 2. Verify Redis URL in backend config:
@@ -266,10 +266,10 @@ docker run -v $(pwd)/workspaces:/workspaces claude-agent
 docker ps -a
 
 # Docker compose services
-docker-compose -f docker-compose.local.yml ps
+docker compose -f docker compose.local.yml ps
 
 # Service logs
-docker-compose -f docker-compose.local.yml logs
+docker compose -f docker compose.local.yml logs
 ```
 
 ### Backend Debugging
@@ -301,7 +301,7 @@ env | grep -E "(ANTHROPIC|AWS|SQS)"
 ### Database Debugging
 ```bash
 # Connect to PostgreSQL
-docker-compose -f docker-compose.local.yml exec postgres psql -U postgres
+docker compose -f docker compose.local.yml exec postgres psql -U postgres
 
 # Useful queries
 \dt                    -- List tables
@@ -312,7 +312,7 @@ SELECT * FROM tasks;  -- View all tasks
 ### Redis Debugging
 ```bash
 # Connect to Redis
-docker-compose -f docker-compose.local.yml exec redis redis-cli
+docker compose -f docker compose.local.yml exec redis redis-cli
 
 # Useful commands
 KEYS *                -- List all keys
@@ -327,7 +327,7 @@ MONITOR              -- Watch all commands
 # Check container stats
 docker stats
 
-# Limit container resources in docker-compose.local.yml:
+# Limit container resources in docker compose.local.yml:
 services:
   agent:
     mem_limit: 2g
@@ -345,7 +345,7 @@ services:
 If all else fails, clean slate:
 ```bash
 # Stop all services
-docker-compose -f docker-compose.local.yml down -v
+docker compose -f docker compose.local.yml down -v
 
 # Remove all containers and volumes
 docker system prune -a --volumes

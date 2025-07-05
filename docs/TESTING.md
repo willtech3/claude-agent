@@ -4,7 +4,7 @@ This guide covers testing procedures for the Claude Agent POC, including setup, 
 
 ## Prerequisites
 
-- Docker and docker-compose installed
+- Docker and docker compose installed
 - Python 3.9+ with pip
 - Node.js 18+ with npm
 - AWS CLI configured (for LocalStack)
@@ -24,7 +24,7 @@ This guide covers testing procedures for the Claude Agent POC, including setup, 
 
 3. **View logs:**
    ```bash
-   docker-compose -f docker-compose.local.yml logs -f
+   docker compose -f docker compose.local.yml logs -f
    ```
 
 ## Service Architecture
@@ -170,10 +170,10 @@ done
 
 ```bash
 # Redis
-docker-compose -f docker-compose.local.yml exec redis redis-cli ping
+docker compose -f docker compose.local.yml exec redis redis-cli ping
 
 # PostgreSQL
-docker-compose -f docker-compose.local.yml exec postgres pg_isready
+docker compose -f docker compose.local.yml exec postgres pg_isready
 
 # LocalStack
 curl http://localhost:4566/_localstack/health
@@ -186,10 +186,10 @@ curl http://localhost:8000/health
 
 ```bash
 # All services
-docker-compose -f docker-compose.local.yml logs -f
+docker compose -f docker compose.local.yml logs -f
 
 # Specific service
-docker-compose -f docker-compose.local.yml logs -f [service-name]
+docker compose -f docker compose.local.yml logs -f [service-name]
 
 # Backend API logs
 sam logs -n BackendFunction --tail
@@ -218,7 +218,7 @@ aws --endpoint-url=http://localhost:4566 sqs receive-message \
 
 ```bash
 # Connect to PostgreSQL
-docker-compose -f docker-compose.local.yml exec postgres psql -U postgres
+docker compose -f docker compose.local.yml exec postgres psql -U postgres
 
 # In psql:
 \dt  # List tables
@@ -229,7 +229,7 @@ SELECT * FROM tasks;  # View tasks
 
 ```bash
 # Connect to Redis CLI
-docker-compose -f docker-compose.local.yml exec redis redis-cli
+docker compose -f docker compose.local.yml exec redis redis-cli
 
 # Monitor all commands
 MONITOR
@@ -247,7 +247,7 @@ SUBSCRIBE "task:*"
 **Solution:**
 ```bash
 # Clean up existing containers
-docker-compose -f docker-compose.local.yml down -v
+docker compose -f docker compose.local.yml down -v
 # Remove old volumes
 docker volume prune
 # Restart
